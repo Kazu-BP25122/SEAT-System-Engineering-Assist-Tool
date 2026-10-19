@@ -1,403 +1,467 @@
-/* フォームエリア */
-    .card {
-        background: #ffffff;
-        padding: 20px;
-        border-radius: 10px;
-        box-shadow: 0 2px 8px rgba(0,0,0,0.06);
-        margin-bottom: 20px;
-    }
-    .card-title {
-        font-size: 1.1rem;
-        font-weight: bold;
-        margin-bottom: 15px;
-        color: #2d3748;
-        border-bottom: 2px solid #edf2f7;
-        padding-bottom: 8px;
-    }
-    .form-row {
-        display: flex;
-        gap: 10px;
-        margin-bottom: 15px;
-        align-items: center;
-    }
-    input[type="text"], select {
-        padding: 8px 12px;
-        border: 1px solid #cbd5e0;
-        border-radius: 6px;
-        font-size: 0.9rem;
-        outline: none;
-    }
-    input[type="text"]:focus, select:focus {
-        border-color: #3182ce;
-        box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.2);
-    }
-    .input-flex {
-        flex: 1;
-    }
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ニーズリスト入力・構造管理</title>
+    <style>
+        * {
+            box-sizing: border-box;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        }
+        body {
+            margin: 0;
+            padding: 20px;
+            background-color: #f0f2f5;
+            color: #333;
+        }
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+        header {
+            background: #ffffff;
+            padding: 20px 25px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        h1 {
+            margin: 0;
+            font-size: 1.4rem;
+            color: #1a202c;
+        }
+        .subtitle {
+            font-size: 0.85rem;
+            color: #718096;
+            margin-top: 4px;
+        }
+        .btn {
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            font-weight: bold;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn-primary {
+            background-color: #3182ce;
+            color: white;
+        }
+        .btn-primary:hover {
+            background-color: #2b6cb0;
+        }
+        .btn-success {
+            background-color: #38a169;
+            color: white;
+            font-size: 1rem;
+            padding: 10px 20px;
+        }
+        .btn-success:hover {
+            background-color: #2f855a;
+        }
+        .btn-danger {
+            background-color: #e53e3e;
+            color: white;
+            padding: 4px 8px;
+            font-size: 0.8rem;
+        }
+        .btn-danger:hover {
+            background-color: #c53030;
+        }
+        .btn-secondary {
+            background-color: #e2e8f0;
+            color: #4a5568;
+        }
+        .btn-secondary:hover {
+            background-color: #cbd5e0;
+        }
+        .card {
+            background: #ffffff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.06);
+            margin-bottom: 20px;
+        }
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #2d3748;
+            border-bottom: 2px solid #edf2f7;
+            padding-bottom: 8px;
+        }
+        .form-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+        input[type="text"], select {
+            padding: 8px 12px;
+            border: 1px solid #cbd5e0;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            outline: none;
+        }
+        input[type="text"]:focus, select:focus {
+            border-color: #3182ce;
+            box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.2);
+        }
+        .input-flex {
+            flex: 1;
+        }
+        .tree-container {
+            margin-top: 10px;
+        }
+        .top-category-block {
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            margin-bottom: 15px;
+            overflow: hidden;
+            background-color: #fff;
+        }
+        .top-category-header {
+            background-color: #edf2f7;
+            padding: 12px 15px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-weight: bold;
+            font-size: 1rem;
+            color: #2d3748;
+        }
+        .sub-category-block {
+            margin: 10px 15px 10px 25px;
+            border-left: 3px solid #cbd5e0;
+            padding-left: 12px;
+        }
+        .sub-category-header {
+            font-weight: bold;
+            font-size: 0.95rem;
+            color: #4a5568;
+            margin-bottom: 8px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        .items-list {
+            list-style: none;
+            padding-left: 0;
+            margin: 5px 0 10px 0;
+        }
+        .items-list li {
+            padding: 6px 10px;
+            background-color: #f7fafc;
+            border: 1px solid #edf2f7;
+            border-radius: 4px;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            font-size: 0.88rem;
+        }
+        .add-inline-form {
+            display: flex;
+            gap: 8px;
+            margin-top: 6px;
+        }
+        .footer-bar {
+            position: sticky;
+            bottom: 20px;
+            background: #ffffff;
+            padding: 15px 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border: 1px solid #e2e8f0;
+        }
+    </style>
+</head>
+<body>
 
-    /* ツリー形式の構造ツリー */
-    .tree-container {
-        margin-top: 10px;
-    }
-    .top-category-block {
-        border: 1px solid #e2e8f0;
-        border-radius: 8px;
-        margin-bottom: 15px;
-        overflow: hidden;
-        background-color: #fff;
-    }
-    .top-category-header {
-        background-color: #edf2f7;
-        padding: 12px 15px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-weight: bold;
-        font-size: 1rem;
-        color: #2d3748;
-    }
-    .sub-category-block {
-        margin: 10px 15px 10px 25px;
-        border-left: 3px solid #cbd5e0;
-        padding-left: 12px;
-    }
-    .sub-category-header {
-        font-weight: bold;
-        font-size: 0.95rem;
-        color: #4a5568;
-        margin-bottom: 8px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-    .items-list {
-        list-style: none;
-        padding-left: 0;
-        margin: 5px 0 10px 0;
-    }
-    .items-list li {
-        padding: 6px 10px;
-        background-color: #f7fafc;
-        border: 1px solid #edf2f7;
-        border-radius: 4px;
-        margin-bottom: 4px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        font-size: 0.88rem;
-    }
-    .add-inline-form {
-        display: flex;
-        gap: 8px;
-        margin-top: 6px;
-    }
+    <div class="container">
+        <header>
+            <div>
+                <h1>ニーズ入力・データ編集</h1>
+                <div class="subtitle">ステークホルダの構造定義とニーズ項目の登録</div>
+            </div>
+            <div>
+                <button class="btn btn-secondary" onclick="resetToDefault()">デフォルトに戻す</button>
+            </div>
+        </header>
 
-    /* フッター固定アクションバー */
-    .footer-bar {
-        position: sticky;
-        bottom: 20px;
-        background: #ffffff;
-        padding: 15px 25px;
-        border-radius: 10px;
-        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-        border: 1px solid #e2e8f0;
-    }
-</style>
-
-<div class="container">
-    <header>
-        <div>
-            <h1>S.E.A.T. ニーズ入力・データ編集</h1>
-            <div class="subtitle">ステークホルダの構造定義とニーズ項目の登録</div>
+        <div class="card">
+            <div class="card-title">＋ 新しいステークホルダ (大カテゴリ) の追加</div>
+            <div class="form-row">
+                <input type="text" id="new-top-category-input" class="input-flex" placeholder="例: 運営スタッフ, スポンサー, 来場者">
+                <button class="btn btn-primary" onclick="addTopCategory()">追加</button>
+            </div>
         </div>
-        <div>
-            <button class="btn btn-secondary" onclick="resetToDefault()">デフォルトに戻す</button>
-        </div>
-    </header>
 
-    <!-- 新しいステークホルダ（大カテゴリ）の追加 -->
-    <div class="card">
-        <div class="card-title">＋ 新しいステークホルダ (大カテゴリ) の追加</div>
-        <div class="form-row">
-            <input type="text" id="new-top-category-input" class="input-flex" placeholder="例: 運営スタッフ, スポンサー, 来場者">
-            <button class="btn btn-primary" onclick="addTopCategory()">追加</button>
+        <div class="card">
+            <div class="card-title">現在のステークホルダ構造・ニーズ一覧</div>
+            <div id="tree-root" class="tree-container">データを読み込み中...</div>
+        </div>
+
+        <div class="footer-bar">
+            <div>
+                <span id="data-status" style="font-size: 0.85rem; color: #718096;">変更内容は自動保存されています</span>
+            </div>
+            <button class="btn btn-success" onclick="saveAndNavigate()">確定して表（出力画面）を出力 →</button>
         </div>
     </div>
 
-    <!-- 現在の構造・データのツリー管理表示 -->
-    <div class="card">
-        <div class="card-title">現在のステークホルダ構造・ニーズ一覧</div>
-        <div id="tree-root" class="tree-container">データを読み込み中...</div>
-    </div>
-
-    <!-- 画面遷移アクションバー -->
-    <div class="footer-bar">
-        <div>
-            <span id="data-status" style="font-size: 0.85rem; color: #718096;">変更内容は自動保存されています</span>
-        </div>
-        <button class="btn btn-success" onclick="saveAndNavigate()">確定して表（出力画面）を出力 →</button>
-    </div>
-</div>
-
-<script>
-    // 初期データ（デフォルト値）
-    const defaultData = {
-        "来場者": {
-            "ファミリー": [
-                "美味しい物を食べたい",
-                "列に並びたくない",
-                "世界観に没頭したい"
-            ],
-            "学生": [
-                "お土産が欲しい",
-                "スマホの充電をしたい",
-                "安く楽しみたい"
+    <script>
+        const defaultData = {
+            "来場者": {
+                "ファミリー": [
+                    "美味しい物を食べたい",
+                    "列に並びたくない",
+                    "世界観に没頭したい"
+                ],
+                "学生": [
+                    "お土産が欲しい",
+                    "スマホの充電をしたい",
+                    "安く楽しみたい"
+                ]
+            },
+            "出展者": [
+                "来場者の感想を聞きたい",
+                "達成感を得たい",
+                "トラブルを防ぎたい"
             ]
-        },
-        "出展者": [
-            "来場者の感想を聞きたい",
-            "達成感を得たい",
-            "トラブルを防ぎたい"
-        ]
-    };
+        };
 
-    let needsData = {};
+        let needsData = {};
 
-    // アプリ起動時のデータ読み込み（localStorage 優先）
-    function init() {
-        const saved = localStorage.getItem('seat_needs_data');
-        if (saved) {
-            try {
-                needsData = JSON.parse(saved);
-            } catch (e) {
+        function init() {
+            const saved = localStorage.getItem('seat_needs_data');
+            if (saved) {
+                try {
+                    needsData = JSON.parse(saved);
+                } catch (e) {
+                    needsData = JSON.parse(JSON.stringify(defaultData));
+                }
+            } else {
                 needsData = JSON.parse(JSON.stringify(defaultData));
             }
-        } else {
-            needsData = JSON.parse(JSON.stringify(defaultData));
-        }
-        renderTree();
-    }
-
-    // localStorageへの自動保存
-    function autoSave() {
-        localStorage.setItem('seat_needs_data', JSON.stringify(needsData));
-        const statusEl = document.getElementById('data-status');
-        statusEl.innerText = "変更をローカルに保存しました (" + new Date().toLocaleTimeString() + ")";
-    }
-
-    // 構造ツリーの描画
-    function renderTree() {
-        const root = document.getElementById('tree-root');
-        const topKeys = Object.keys(needsData);
-
-        if (topKeys.length === 0) {
-            root.innerHTML = '<p style="color: #a0aec0; text-align: center; padding: 20px;">ステークホルダが登録されていません。上のフォームから追加してください。</p>';
-            return;
+            renderTree();
         }
 
-        let html = '';
+        function autoSave() {
+            localStorage.setItem('seat_needs_data', JSON.stringify(needsData));
+            const statusEl = document.getElementById('data-status');
+            statusEl.innerText = "変更をローカルに保存しました (" + new Date().toLocaleTimeString() + ")";
+        }
 
-        topKeys.forEach(topKey => {
-            const val = needsData[topKey];
-            const isArray = Array.isArray(val);
+        function renderTree() {
+            const root = document.getElementById('tree-root');
+            const topKeys = Object.keys(needsData);
 
-            html += `
-                <div class="top-category-block">
-                    <div class="top-category-header">
-                        <span>📂 ${escapeHtml(topKey)}</span>
-                        <div>
-                            ${isArray ? `<button class="btn btn-secondary" style="font-size: 0.75rem; padding: 3px 8px; margin-right: 5px;" onclick="convertToGroup('${escapeHtml(topKey)}')">階層グループ化</button>` : ''}
-                            <button class="btn btn-danger" onclick="deleteTopCategory('${escapeHtml(topKey)}')">削除</button>
-                        </div>
-                    </div>
-            `;
-
-            if (isArray) {
-                // 直下に配列（サブカテゴリがない構造）
-                html += `<div style="padding: 10px 15px;">`;
-                html += renderItemsList(val, [topKey]);
-                html += renderAddInlineForm([topKey], "＋ ニーズを追加");
-                html += `</div>`;
-            } else if (typeof val === 'object' && val !== null) {
-                // サブカテゴリが存在する階層構造
-                const subKeys = Object.keys(val);
-                
-                subKeys.forEach(subKey => {
-                    const items = val[subKey] || [];
-                    html += `
-                        <div class="sub-category-block">
-                            <div class="sub-category-header">
-                                <span>└ 📁 ${escapeHtml(subKey)}</span>
-                                <button class="btn btn-danger" onclick="deleteSubCategory('${escapeHtml(topKey)}', '${escapeHtml(subKey)}')">削除</button>
-                            </div>
-                            ${renderItemsList(items, [topKey, subKey])}
-                            ${renderAddInlineForm([topKey, subKey], "＋ ニーズを追加")}
-                        </div>
-                    `;
-                });
-
-                // サブカテゴリ追加フォーム
-                html += `
-                    <div style="padding: 10px 15px; background-color: #faf5ff; border-top: 1px dashed #d6bcfa;">
-                        <div class="add-inline-form">
-                            <input type="text" id="add-sub-${escapeHtml(topKey)}" class="input-flex" placeholder="＋ サブカテゴリを追加 (例: 若年層, VIP)" onkeydown="if(event.key==='Enter') addSubCategory('${escapeHtml(topKey)}')">
-                            <button class="btn btn-primary" style="font-size: 0.8rem;" onclick="addSubCategory('${escapeHtml(topKey)}')">グループ追加</button>
-                        </div>
-                    </div>
-                `;
+            if (topKeys.length === 0) {
+                root.innerHTML = '<p style="color: #a0aec0; text-align: center; padding: 20px;">ステークホルダが登録されていません。上のフォームから追加してください。</p>';
+                return;
             }
 
-            html += `</div>`;
-        });
+            let html = '';
 
-        root.innerHTML = html;
-    }
+            topKeys.forEach(topKey => {
+                const val = needsData[topKey];
+                const isArray = Array.isArray(val);
 
-    // ニーズ一覧リストの描画
-    function renderItemsList(items, path) {
-        if (!items || items.length === 0) {
-            return '<p style="font-size: 0.8rem; color: #a0aec0; margin: 4px 0;">(ニーズ項目なし)</p>';
+                html += `
+                    <div class="top-category-block">
+                        <div class="top-category-header">
+                            <span>📂 ${escapeHtml(topKey)}</span>
+                            <div>
+                                ${isArray ? `<button class="btn btn-secondary" style="font-size: 0.75rem; padding: 3px 8px; margin-right: 5px;" onclick="convertToGroup('${escapeHtml(topKey)}')">階層グループ化</button>` : ''}
+                                <button class="btn btn-danger" onclick="deleteTopCategory('${escapeHtml(topKey)}')">削除</button>
+                            </div>
+                        </div>
+                `;
+
+                if (isArray) {
+                    html += `<div style="padding: 10px 15px;">`;
+                    html += renderItemsList(val, [topKey]);
+                    html += renderAddInlineForm([topKey], "＋ ニーズを追加");
+                    html += `</div>`;
+                } else if (typeof val === 'object' && val !== null) {
+                    const subKeys = Object.keys(val);
+                    
+                    subKeys.forEach(subKey => {
+                        const items = val[subKey] || [];
+                        html += `
+                            <div class="sub-category-block">
+                                <div class="sub-category-header">
+                                    <span>└ 📁 ${escapeHtml(subKey)}</span>
+                                    <button class="btn btn-danger" onclick="deleteSubCategory('${escapeHtml(topKey)}', '${escapeHtml(subKey)}')">削除</button>
+                                </div>
+                                ${renderItemsList(items, [topKey, subKey])}
+                                ${renderAddInlineForm([topKey, subKey], "＋ ニーズを追加")}
+                            </div>
+                        `;
+                    });
+
+                    html += `
+                        <div style="padding: 10px 15px; background-color: #faf5ff; border-top: 1px dashed #d6bcfa;">
+                            <div class="add-inline-form">
+                                <input type="text" id="add-sub-${escapeHtml(topKey)}" class="input-flex" placeholder="＋ サブカテゴリを追加 (例: 若年層, VIP)" onkeydown="if(event.key==='Enter') addSubCategory('${escapeHtml(topKey)}')">
+                                <button class="btn btn-primary" style="font-size: 0.8rem;" onclick="addSubCategory('${escapeHtml(topKey)}')">グループ追加</button>
+                            </div>
+                        </div>
+                    `;
+                }
+
+                html += `</div>`;
+            });
+
+            root.innerHTML = html;
         }
-        let html = '<ul class="items-list">';
-        items.forEach((item, idx) => {
+
+        function renderItemsList(items, path) {
+            if (!items || items.length === 0) {
+                return '<p style="font-size: 0.8rem; color: #a0aec0; margin: 4px 0;">(ニーズ項目なし)</p>';
+            }
+            let html = '<ul class="items-list">';
+            items.forEach((item, idx) => {
+                const pathStr = JSON.stringify(path);
+                html += `
+                    <li>
+                        <span>・ ${escapeHtml(item)}</span>
+                        <button class="btn btn-danger" onclick='deleteNeedItem(${pathStr}, ${idx})'>×</button>
+                    </li>
+                `;
+            });
+            html += '</ul>';
+            return html;
+        }
+
+        function renderAddInlineForm(path, placeholder) {
+            const pathId = path.join('___');
             const pathStr = JSON.stringify(path);
-            html += `
-                <li>
-                    <span>・ ${escapeHtml(item)}</span>
-                    <button class="btn btn-danger" onclick='deleteNeedItem(${pathStr}, ${idx})'>×</button>
-                </li>
+            return `
+                <div class="add-inline-form">
+                    <input type="text" id="input-${pathId}" class="input-flex" placeholder="${placeholder}" onkeydown='if(event.key==="Enter") addNeedItem(${pathStr})'>
+                    <button class="btn btn-secondary" style="font-size: 0.8rem;" onclick='addNeedItem(${pathStr})'>追加</button>
+                </div>
             `;
-        });
-        html += '</ul>';
-        return html;
-    }
-
-    // 入力フォーム描画
-    function renderAddInlineForm(path, placeholder) {
-        const pathId = path.join('___');
-        const pathStr = JSON.stringify(path);
-        return `
-            <div class="add-inline-form">
-                <input type="text" id="input-${pathId}" class="input-flex" placeholder="${placeholder}" onkeydown='if(event.key==="Enter") addNeedItem(${pathStr})'>
-                <button class="btn btn-secondary" style="font-size: 0.8rem;" onclick='addNeedItem(${pathStr})'>追加</button>
-            </div>
-        `;
-    }
-
-    // --- データ操作ロジック ---
-
-    function addTopCategory() {
-        const input = document.getElementById('new-top-category-input');
-        const name = input.value.trim();
-        if (!name) return;
-        if (needsData[name]) {
-            alert('既に存在するステークホルダ名です。');
-            return;
         }
-        needsData[name] = [];
-        input.value = '';
-        autoSave();
-        renderTree();
-    }
 
-    function deleteTopCategory(topKey) {
-        if (confirm(`「${topKey}」とその下のデータをすべて削除しますか？`)) {
-            delete needsData[topKey];
+        function addTopCategory() {
+            const input = document.getElementById('new-top-category-input');
+            const name = input.value.trim();
+            if (!name) return;
+            if (needsData[name]) {
+                alert('既に存在するステークホルダ名です。');
+                return;
+            }
+            needsData[name] = [];
+            input.value = '';
             autoSave();
             renderTree();
         }
-    }
 
-    function addSubCategory(topKey) {
-        const input = document.getElementById(`add-sub-${topKey}`);
-        const subName = input.value.trim();
-        if (!subName) return;
-
-        if (Array.isArray(needsData[topKey])) {
-            needsData[topKey] = {};
+        function deleteTopCategory(topKey) {
+            if (confirm(`「${topKey}」とその下のデータをすべて削除しますか？`)) {
+                delete needsData[topKey];
+                autoSave();
+                renderTree();
+            }
         }
-        if (!needsData[topKey][subName]) {
-            needsData[topKey][subName] = [];
-        }
-        input.value = '';
-        autoSave();
-        renderTree();
-    }
 
-    function deleteSubCategory(topKey, subKey) {
-        if (confirm(`サブカテゴリ「${subKey}」を削除しますか？`)) {
-            delete needsData[topKey][subKey];
+        function addSubCategory(topKey) {
+            const input = document.getElementById(`add-sub-${topKey}`);
+            const subName = input.value.trim();
+            if (!subName) return;
+
+            if (Array.isArray(needsData[topKey])) {
+                needsData[topKey] = {};
+            }
+            if (!needsData[topKey][subName]) {
+                needsData[topKey][subName] = [];
+            }
+            input.value = '';
             autoSave();
             renderTree();
         }
-    }
 
-    function convertToGroup(topKey) {
-        const currentItems = needsData[topKey];
-        needsData[topKey] = {
-            "一般": currentItems
-        };
-        autoSave();
-        renderTree();
-    }
-
-    function addNeedItem(path) {
-        const pathId = path.join('___');
-        const input = document.getElementById(`input-${pathId}`);
-        const text = input.value.trim();
-        if (!text) return;
-
-        if (path.length === 1) {
-            needsData[path[0]].push(text);
-        } else if (path.length === 2) {
-            needsData[path[0]][path[1]].push(text);
+        function deleteSubCategory(topKey, subKey) {
+            if (confirm(`サブカテゴリ「${subKey}」を削除しますか？`)) {
+                delete needsData[topKey][subKey];
+                autoSave();
+                renderTree();
+            }
         }
 
-        input.value = '';
-        autoSave();
-        renderTree();
-
-        setTimeout(() => {
-            const el = document.getElementById(`input-${pathId}`);
-            if (el) el.focus();
-        }, 50);
-    }
-
-    function deleteNeedItem(path, idx) {
-        if (path.length === 1) {
-            needsData[path[0]].splice(idx, 1);
-        } else if (path.length === 2) {
-            needsData[path[0]][path[1]].splice(idx, 1);
-        }
-        autoSave();
-        renderTree();
-    }
-
-    function resetToDefault() {
-        if (confirm('初期データにリセットしますか？現在の編集内容は上書きされます。')) {
-            needsData = JSON.parse(JSON.stringify(defaultData));
+        function convertToGroup(topKey) {
+            const currentItems = needsData[topKey];
+            needsData[topKey] = {
+                "一般": currentItems
+            };
             autoSave();
             renderTree();
         }
-    }
 
-    // 確定して出力画面(needsList.html)へ遷移
-    function saveAndNavigate() {
-        localStorage.setItem('seat_needs_data', JSON.stringify(needsData));
-        // 実際のファイル連携時は needsList.html に移動
-        window.location.href = 'needsList_backup.html';
-    }
+        function addNeedItem(path) {
+            const pathId = path.join('___');
+            const input = document.getElementById(`input-${pathId}`);
+            const text = input.value.trim();
+            if (!text) return;
 
-    function escapeHtml(str) {
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
-    }
+            if (path.length === 1) {
+                needsData[path[0]].push(text);
+            } else if (path.length === 2) {
+                needsData[path[0]][path[1]].push(text);
+            }
 
-    init();
-</script>
+            input.value = '';
+            autoSave();
+            renderTree();
+
+            setTimeout(() => {
+                const el = document.getElementById(`input-${pathId}`);
+                if (el) el.focus();
+            }, 50);
+        }
+
+        function deleteNeedItem(path, idx) {
+            if (path.length === 1) {
+                needsData[path[0]].splice(idx, 1);
+            } else if (path.length === 2) {
+                needsData[path[0]][path[1]].splice(idx, 1);
+            }
+            autoSave();
+            renderTree();
+        }
+
+        function resetToDefault() {
+            if (confirm('初期データにリセットしますか？現在の編集内容は上書きされます。')) {
+                needsData = JSON.parse(JSON.stringify(defaultData));
+                autoSave();
+                renderTree();
+            }
+        }
+
+        function saveAndNavigate() {
+            localStorage.setItem('seat_needs_data', JSON.stringify(needsData));
+            window.location.href = 'needsList.html';
+        }
+
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
+        }
+
+        init();
+    </script>
+</body>
+</html>

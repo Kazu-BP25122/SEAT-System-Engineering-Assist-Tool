@@ -1,272 +1,158 @@
-<div class="container">
-    <header>
-        <div>
-            <h1>S.E.A.T. ニーズリスト</h1>
-            <div class="subtitle">インライン入力フォーム・全自動ジェネリックレンダリング対応</div>
-        </div>
-        <div class="actions">
-            <button class="action-btn" onclick="exportJSON()">現在のJSONを表示</button>
-        </div>
-    </header>
-
-    <div id="table-container">表を描画中...</div>
-</div>
-
-<!-- JSON確認用モーダル -->
-<div id="json-modal" class="modal">
-    <div class="modal-content">
-        <div class="modal-header">
-            <h3 style="margin: 0;">出力用 JSON</h3>
-            <button class="modal-close" onclick="closeModal()">閉じる</button>
-        </div>
-        <p style="font-size: 0.85rem; color: #666; margin-top: 0;">この内容をコピーして <code>needsList.json</code> に上書き保存できます。</p>
-        <textarea id="json-preview-text" class="json-preview" readonly></textarea>
-    </div>
-</div>
-
-<script>
-    // 初期データ（外部JSONを読み込めない環境用のデフォルトフォールバックデータ）
-    let needsData = {
-        "来場者": {
-            "ファミリー": [
-                "美味しい物を食べたい",
-                "列に並びたくない",
-                "世界観に没頭したい",
-                "お土産が欲しい",
-                "スマホの充電をしたい",
-                "安く楽しみたい",
-                "写真をSNSにアップしたい",
-                "座りたい"
-            ],
-            "学生": [
-                "お土産が欲しい",
-                "スマホの充電をしたい",
-                "安く楽しみたい",
-                "写真をSNSにアップしたい",
-                "現金を使いたくない",
-                "友達と一緒に楽しみたい",
-                "盛り上がりたい"
-            ],
-            "OB/OG": [
-                "美味しい物を食べたい",
-                "列に並びたくない",
-                "懐かしみたい",
-                "写真をSNSにアップしたい",
-                "現金を使いたくない",
-                "友達と一緒に楽しみたい"
-            ]
-        },
-        "出展者": [
-            "来場者の感想を聞きたい",
-            "達成感を得たい",
-            "トレンドを把握したい",
-            "長時間待たせたくない",
-            "データを取りたい",
-            "たくさんの人に来てほしい",
-            "費用を抑えて運営したい",
-            "クレームを防ぎたい",
-            "トラブルを防ぎたい"
-        ]
-    };
-
-    // アプリ起動時に外部JSONの取得を試みる (fetch)
-    async function init() {
-        try {
-            const response = await fetch('needsList.json');
-            if (response.ok) {
-                needsData = await response.json();
-            }
-        } catch (e) {
-            console.log("ローカルJSON読み込みスキップ: 内蔵初期データを使用します");
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <title>ニーズリスト</title>
+    <style>
+        body {
+            font-family: sans-serif;
+            margin: 30px;
         }
-        renderTable();
-    }
+        table {
+            border-collapse: collapse;
+            width: 100%;
+            max-width: 900px;
+            margin-top: 20px;
+        }
+        th, td {
+            border: 2px solid #000;
+            padding: 10px;
+            text-align: center;
+        }
+        th {
+            background-color: #f4f4f4;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
 
-    // テーブルの全自動レンダリング処理
-    function renderTable() {
-        const container = document.getElementById('table-container');
-        
-        // 1. カラム（最下層の列）のリストを自動解析
-        const topCategories = Object.keys(needsData);
-        const columns = [];
-        
-        topCategories.forEach(topKey => {
-            const val = needsData[topKey];
-            if (Array.isArray(val)) {
-                columns.push({
-                    topCategory: topKey,
-                    subCategory: null,
-                    items: val,
-                    path: [topKey]
-                });
-            } else if (typeof val === 'object' && val !== null) {
-                Object.keys(val).forEach(subKey => {
+    <h1>ニーズリスト</h1>
+    
+    <div id="table-container">データを読み込み中...</div>
+
+    <script>
+function loadAndRenderTable() {
+            try {
+                // localStorage から入力画面で保存されたデータを取得する
+                const saved = localStorage.getItem('seat_needs_data');
+                
+                let needsData;
+                if (saved) {
+                    needsData = JSON.parse(saved);
+                } else {
+                    // localStorageにデータが無い場合の初期データ（フォールバック）
+                    needsData = {
+                        "来場者": {
+                            "ファミリー": [
+                                "美味しい物を食べたい",
+                                "列に並びたくない",
+                                "世界観に没頭したい"
+                            ],
+                            "学生": [
+                                "お土産が欲しい",
+                                "スマホの充電をしたい",
+                                "安く楽しみたい"
+                            ]
+                        },
+                        "出展者": [
+                            "来場者の感想を聞きたい",
+                            "達成感を得たい",
+                            "トラブルを防ぎたい"
+                        ]
+                    };
+                }
+                
+                renderTable(needsData);
+            } catch (error) {
+                console.error("データの読み込みに失敗しました:", error);
+                document.getElementById('table-container').innerText = 
+                    "データの読み込みに失敗しました。";
+            }
+        }
+
+        // どんな構造のJSONでも自動解析して表を描画する汎用関数
+        function renderTable(needsData) {
+            const container = document.getElementById('table-container');
+            
+            // 1. カラム（最下層の列）のリストと構造を解析
+            const topCategories = Object.keys(needsData); // ['来場者', '出展者'] など
+            const columns = []; // 最下層の列情報 [{ parent: '来場者', name: 'ファミリー', list: [...] }, ...]
+            
+            topCategories.forEach(topKey => {
+                const val = needsData[topKey];
+                if (Array.isArray(val)) {
+                    // サブカテゴリがない場合
                     columns.push({
                         topCategory: topKey,
-                        subCategory: subKey,
-                        items: val[subKey] || [],
-                        path: [topKey, subKey]
+                        subCategory: null,
+                        items: val
                     });
-                });
-            }
-        });
-
-        const hasSubHeader = columns.some(col => col.subCategory !== null);
-        let html = '<table><thead>';
-
-        // 2. ヘッダー1行目
-        html += '<tr>';
-        topCategories.forEach(topKey => {
-            const childCols = columns.filter(col => col.topCategory === topKey);
-            const colSpan = childCols.length;
-            if (hasSubHeader && childCols.every(col => col.subCategory === null)) {
-                html += `<th colspan="${colSpan}" rowspan="2">${topKey}</th>`;
-            } else {
-                html += `<th colspan="${colSpan}">${topKey}</th>`;
-            }
-        });
-        html += '</tr>';
-
-        // 3. ヘッダー2行目（必要な場合のみ）
-        if (hasSubHeader) {
-            html += '<tr>';
-            columns.forEach(col => {
-                if (col.subCategory !== null) {
-                    html += `<th>${col.subCategory}</th>`;
+                } else if (typeof val === 'object' && val !== null) {
+                    // サブカテゴリが存在する場合
+                    Object.keys(val).forEach(subKey => {
+                        columns.push({
+                            topCategory: topKey,
+                            subCategory: subKey,
+                            items: val[subKey] || []
+                        });
+                    });
                 }
             });
-            html += '</tr>';
-        }
-        html += '</thead><tbody>';
 
-        // 4. データ行の描画
-        const maxRows = Math.max(...columns.map(col => col.items.length), 0);
+            // サブカテゴリが1つでもあるかチェック（ヘッダーを2段にするか判断）
+            const hasSubHeader = columns.some(col => col.subCategory !== null);
 
-        for (let i = 0; i < maxRows; i++) {
+            let html = '<table><thead>';
+
+            // 2. ヘッダー 1行目（大カテゴリ）の自動生成
             html += '<tr>';
-            columns.forEach((col, colIdx) => {
-                const itemText = col.items[i];
-                if (itemText !== undefined) {
-                    html += `
-                        <td class="item-cell">
-                            <div class="cell-content">
-                                <span class="item-text">${escapeHtml(itemText)}</span>
-                                <button class="delete-btn" onclick="deleteItem(${colIdx}, ${i})" title="削除">×</button>
-                            </div>
-                        </td>`;
+            topCategories.forEach(topKey => {
+                // この大カテゴリ配下にいくつ列が存在するかカウント（colspan）
+                const childCols = columns.filter(col => col.topCategory === topKey);
+                const colSpan = childCols.length;
+                
+                // サブカテゴリ全体がない場合はrowspan="2"、ある場合は通常表示
+                if (hasSubHeader && childCols.every(col => col.subCategory === null)) {
+                    html += `<th colspan="${colSpan}" rowspan="2">${topKey}</th>`;
                 } else {
-                    html += `<td class="empty-cell"></td>`;
+                    html += `<th colspan="${colSpan}">${topKey}</th>`;
                 }
             });
             html += '</tr>';
-        }
 
-        // 5. インライン追加入力行（最下部に配置）
-        html += '<tr class="input-row">';
-        columns.forEach((col, colIdx) => {
-            html += `
-                <td>
-                    <div class="inline-input-group">
-                        <input type="text" 
-                               id="input-col-${colIdx}" 
-                               class="inline-input" 
-                               placeholder="＋ 項目を入力" 
-                               onkeydown="handleKeyDown(event, ${colIdx})">
-                        <button class="add-btn" onclick="addItemFromInput(${colIdx})">追加</button>
-                    </div>
-                </td>`;
-        });
-        html += '</tr>';
-
-        html += '</tbody></table>';
-        container.innerHTML = html;
-    }
-
-    // インライン入力からの項目追加機能
-    function addItemFromInput(colIdx) {
-        const inputEl = document.getElementById(`input-col-${colIdx}`);
-        const text = inputEl.value.trim();
-        if (!text) return;
-
-        // データ構造から対象の配列を取得
-        const columns = getColumnsInfo();
-        const targetCol = columns[colIdx];
-        
-        if (targetCol.subCategory) {
-            needsData[targetCol.topCategory][targetCol.subCategory].push(text);
-        } else {
-            needsData[targetCol.topCategory].push(text);
-        }
-
-        renderTable();
-
-        // 直前に追加した入力欄にフォーカスを戻す
-        setTimeout(() => {
-            const nextInput = document.getElementById(`input-col-${colIdx}`);
-            if (nextInput) nextInput.focus();
-        }, 50);
-    }
-
-    // Enterキーで即時追加できるようにする処理
-    function handleKeyDown(event, colIdx) {
-        if (event.key === 'Enter') {
-            event.preventDefault();
-            addItemFromInput(colIdx);
-        }
-    }
-
-    // 項目の削除機能
-    function deleteItem(colIdx, itemIdx) {
-        const columns = getColumnsInfo();
-        const targetCol = columns[colIdx];
-
-        if (targetCol.subCategory) {
-            needsData[targetCol.topCategory][targetCol.subCategory].splice(itemIdx, 1);
-        } else {
-            needsData[targetCol.topCategory].splice(itemIdx, 1);
-        }
-
-        renderTable();
-    }
-
-    // カラム解析用共通ヘルパー
-    function getColumnsInfo() {
-        const topCategories = Object.keys(needsData);
-        const columns = [];
-        topCategories.forEach(topKey => {
-            const val = needsData[topKey];
-            if (Array.isArray(val)) {
-                columns.push({ topCategory: topKey, subCategory: null, items: val });
-            } else if (typeof val === 'object' && val !== null) {
-                Object.keys(val).forEach(subKey => {
-                    columns.push({ topCategory: topKey, subCategory: subKey, items: val[subKey] });
+            // 3. ヘッダー 2行目（サブカテゴリ）の自動生成（必要な場合のみ）
+            if (hasSubHeader) {
+                html += '<tr>';
+                columns.forEach(col => {
+                    if (col.subCategory !== null) {
+                        html += `<th>${col.subCategory}</th>`;
+                    }
                 });
+                html += '</tr>';
             }
-        });
-        return columns;
-    }
+            html += '</thead>';
 
-    // XSS防止エスケープ処理
-    function escapeHtml(str) {
-        return String(str)
-            .replace(/&/g, '&amp;')
-            .replace(/</g, '&lt;')
-            .replace(/>/g, '&gt;')
-            .replace(/"/g, '&quot;');
-    }
+            // 4. データ行の自動生成
+            html += '<tbody>';
+            // 最も要素数の多い列の長さを自動計算（maxRows）
+            const maxRows = Math.max(...columns.map(col => col.items.length), 0);
 
-    // モーダル関連処理
-    function exportJSON() {
-        const modal = document.getElementById('json-modal');
-        const textarea = document.getElementById('json-preview-text');
-        textarea.value = JSON.stringify(needsData, null, 2);
-        modal.style.display = 'flex';
-    }
+            for (let i = 0; i < maxRows; i++) {
+                html += '<tr>';
+                columns.forEach(col => {
+                    const itemText = col.items[i] || "";
+                    html += `<td>${itemText}</td>`;
+                });
+                html += '</tr>';
+            }
 
-    function closeModal() {
-        document.getElementById('json-modal').style.display = 'none';
-    }
+            html += '</tbody></table>';
+            container.innerHTML = html;
+        }
 
-    // 実行開始
-    init();
-</script>
+        loadAndRenderTable();
+    </script>
+
+</body>
+</html>
