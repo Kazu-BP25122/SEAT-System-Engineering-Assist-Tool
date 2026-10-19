@@ -2,151 +2,210 @@
 <html lang="ja">
 <head>
     <meta charset="UTF-8">
-    <title>S.E.A.T. SWOT / クロスSWOT分析</title>
+    <title>SWOT / クロスSWOTデータ編集</title>
+    <link rel="stylesheet" href="../../style.css">
     <style>
-        body {
-            font-family: sans-serif;
-            margin: 30px;
-            background-color: #f9f9f9;
+        .swot-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+            gap: 20px;
+            margin-top: 20px;
         }
-        .container {
-            max-width: 900px;
-            margin: 0 auto;
+        .swot-card {
+            border-top: 4px solid #3182ce;
         }
-        h2 {
-            margin-top: 40px;
-            font-size: 1.2rem;
-            color: #333;
-            text-align: center;
+        .swot-card.cross-swot {
+            border-top-color: #805ad5;
+            background-color: #faf5ff;
         }
-        table.swot-matrix {
-            border-collapse: collapse;
+        .json-preview {
             width: 100%;
-            margin-top: 15px;
-            background-color: #fff;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-        }
-        table.swot-matrix td {
-            border: 2px solid #333;
-            width: 50%;
-            height: 180px;
-            vertical-align: top;
+            height: 250px;
+            font-family: monospace;
+            font-size: 0.85rem;
+            background-color: #2d3748;
+            color: #68d391;
             padding: 15px;
+            border-radius: 6px;
             box-sizing: border-box;
-        }
-        .title {
-            font-weight: bold;
-            font-size: 1.1rem;
-            margin-bottom: 10px;
-            border-bottom: 1px solid #ccc;
-            padding-bottom: 5px;
-        }
-        ul {
-            margin: 0;
-            padding-left: 20px;
-        }
-        li {
-            margin-bottom: 6px;
-            line-height: 1.4;
+            white-space: pre-wrap;
+            overflow-y: auto;
         }
     </style>
 </head>
 <body>
-
     <div class="container">
-        <h1>SWOT分析</h1>
-        
-        <h2>SWOT 分析の結果</h2>
-        <div id="swot-table-container">データを読み込み中...</div>
+        <header>
+            <div>
+                <h1>SWOT / クロスSWOTデータ編集</h1>
+                <div class="subtitle">JSONデータの入力・閲覧・編集ツール</div>
+            </div>
+            <div>
+                <button class="btn btn-secondary" onclick="resetDefault()">初期データに戻す</button>
+            </div>
+        </header>
 
-        <h2>クロス SWOT 分析の結果</h2>
-        <div id="cross-swot-table-container">データを読み込み中...</div>
-    </div>
+        <!-- メイン入力グリッド -->
+        <div id="swot-cards-container" class="swot-grid"></div>
+        <div class="footer-bar">
+            <div>
+                <span id="data-status" style="font-size: 0.85rem; color: #718096;">変更内容は自動保存されています</span>
+            </div>
+            <button class="btn btn-success" onclick="saveAndNavigate()">確定して表（出力画面）を出力 →</button>
+        </div>
 
     <script>
-        async function loadAndRender() {
-            try {
-                const response = await fetch('swot.json');
-                if (!response.ok) throw new Error('JSONの読み込みに失敗しました');
-                const data = await response.json();
+        // 指定された初期JSON構造
+        const defaultSwotData = {
+            "S:強み": [
+            ],
+            "W:弱み": [
+            ],
+            "O:機会": [
+            ],
+            "T:脅威": [
+            ],
+            "S×O:積極的攻勢": [
+            ],
+            "S×T:差別化戦略": [
+            ],
+            "W×O:段階的施策": [
+            ],
+            "W×T:専守防衛・撤退": [
+            ]
+        };
 
-                renderSwotTable(data);
-                renderCrossSwotTable(data);
-            } catch (err) {
-                console.error(err);
-                document.body.innerHTML = '<h3>データの読み込みエラー（Live Server等で実行してください）</h3>';
+        let currentData = {};
+
+        // 初期化処理
+        function init() {
+            const saved = localStorage.getItem('seat_swot_data');
+            if (saved) {
+                try {
+                    currentData = JSON.parse(saved);
+                } catch (e) {
+                    currentData = JSON.parse(JSON.stringify(defaultSwotData));
+                }
+            } else {
+                currentData = JSON.parse(JSON.stringify(defaultSwotData));
+            }
+            render();
+        }
+
+        // 自動保存と描画更新
+        function saveAndRender() {
+            localStorage.setItem('seat_swot_data', JSON.stringify(currentData));
+            render();
+        }
+
+        // 画面のレンダリング
+        function render() {
+            const container = document.getElementById('swot-cards-container');
+            let html = '';
+
+            Object.keys(currentData).forEach((key) => {
+                const isCross = key.includes('×');
+                const items = currentData[key] || [];
+
+                html += `
+                    <div class="card swot-card ${isCross ? 'cross-swot' : ''}">
+                        <div class="card-title">${escapeHtml(key)}</div>
+                        
+                        <ul class="items-list">
+                `;
+
+                if (items.length === 0) {
+                    html += `<p style="font-size: 0.8rem; color: #a0aec0; margin: 4px 0;">(項目なし)</p>`;
+                } else {
+                    items.forEach((item, index) => {
+                        html += `
+                            <li>
+                                <span>・ ${escapeHtml(item)}</span>
+                                <button class="btn btn-danger" onclick="deleteItem('${escapeHtml(key)}', ${index})">×</button>
+                            </li>
+                        `;
+                    });
+                }
+
+                html += `
+                        </ul>
+                        <div class="add-inline-form">
+                            <input type="text" id="input-${escapeHtml(key)}" class="input-flex" placeholder="＋ 項目を追加" onkeydown="if(event.key==='Enter') addItem('${escapeHtml(key)}')">
+                            <button class="btn btn-secondary" style="font-size: 0.8rem;" onclick="addItem('${escapeHtml(key)}')">追加</button>
+                        </div>
+                    </div>
+                `;
+            });
+
+            container.innerHTML = html;
+
+            // JSONプレビューの更新
+            document.getElementById('json-output').value = JSON.stringify(currentData, null, 4);
+        }
+
+        // 項目の追加
+        function addItem(key) {
+            const input = document.getElementById(`input-${key}`);
+            const text = input.value.trim();
+            if (!text) return;
+
+            if (!currentData[key]) {
+                currentData[key] = [];
+            }
+            currentData[key].push(text);
+            input.value = '';
+            saveAndRender();
+
+            // フォーカスを保持
+            setTimeout(() => {
+                const el = document.getElementById(`input-${key}`);
+                if (el) el.focus();
+            }, 50);
+        }
+
+        // 項目の削除
+        function deleteItem(key, index) {
+            if (currentData[key]) {
+                currentData[key].splice(index, 1);
+                saveAndRender();
             }
         }
 
-        // リスト（配列）を <ul><li>...</li></ul> のHTML文字列に変換するヘルパー関数
-        function createListHtml(items) {
-            if (!items || items.length === 0) return '';
-            const listItems = items.map(item => `<li>${item}</li>`).join('');
-            return `<ul>${listItems}</ul>`;
+        // リセット
+        function resetDefault() {
+            if (confirm('初期状態のSWOTデータに戻しますか？')) {
+                currentData = JSON.parse(JSON.stringify(defaultSwotData));
+                saveAndRender();
+            }
         }
 
-        // 1. SWOT分析表（2×2マトリックス）の作成
-        function renderSwotTable(data) {
-            const container = document.getElementById('swot-table-container');
-            const html = `
-                <table class="swot-matrix">
-                    <tr>
-                        <td>
-                            <div class="title">S:強み</div>
-                            ${createListHtml(data["S:強み"])}
-                        </td>
-                        <td>
-                            <div class="title">W:弱み</div>
-                            ${createListHtml(data["W:弱み"])}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="title">O:機会</div>
-                            ${createListHtml(data["O:機会"])}
-                        </td>
-                        <td>
-                            <div class="title">T:脅威</div>
-                            ${createListHtml(data["T:脅威"])}
-                        </td>
-                    </tr>
-                </table>
-            `;
-            container.innerHTML = html;
+        // JSONテキストのコピー
+        function copyJson() {
+            const jsonText = document.getElementById('json-output').value;
+            navigator.clipboard.writeText(jsonText).then(() => {
+                alert('JSONをクリップボードにコピーしました！');
+            });
         }
 
-        // 2. クロスSWOT分析表（2×2マトリックス）の作成
-        function renderCrossSwotTable(data) {
-            const container = document.getElementById('cross-swot-table-container');
-            const html = `
-                <table class="swot-matrix">
-                    <tr>
-                        <td>
-                            <div class="title">積極的攻勢 (S × O)</div>
-                            ${createListHtml(data["S×O:積極的攻勢"])}
-                        </td>
-                        <td>
-                            <div class="title">差別化戦略 (S × T)</div>
-                            ${createListHtml(data["S×T:差別化戦略"])}
-                        </td>
-                    </tr>
-                    <tr>
-                        <td>
-                            <div class="title">段階的施策 (W × O)</div>
-                            ${createListHtml(data["W×O:段階的施策"])}
-                        </td>
-                        <td>
-                            <div class="title">専守防衛・撤退 (W × T)</div>
-                            ${createListHtml(data["W×T:専守防衛・撤退"])}
-                        </td>
-                    </tr>
-                </table>
-            `;
-            container.innerHTML = html;
+        // エスケープ処理
+        function escapeHtml(str) {
+            return String(str)
+                .replace(/&/g, '&amp;')
+                .replace(/</g, '&lt;')
+                .replace(/>/g, '&gt;')
+                .replace(/"/g, '&quot;');
         }
 
-        loadAndRender();
+        function saveAndNavigate() {
+    // output.html 側で読み込めるキー名で保存
+            localStorage.setItem('seat_swot_data', JSON.stringify(currentData));
+    
+    // 出力画面へ遷移
+            window.location.href = 'output.html';
+        }
+
+
+        init();
     </script>
-
 </body>
 </html>
