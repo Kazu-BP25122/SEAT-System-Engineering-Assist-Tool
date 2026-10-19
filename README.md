@@ -1,4 +1,4 @@
-# Astro Starter Kit: Minimal
+# SEAT -System Engineering Assist Tool
 
 ```sh
 npm create astro@latest -- --template minimal
