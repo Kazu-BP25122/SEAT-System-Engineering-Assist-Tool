@@ -1,11 +1,35 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
+import '../styles/style.css';
 ---
 
-<BaseLayout title="SEAT">
-	<h1>SEAT</h1>
-	<h2>System Engineering Assist Tool</h2>
-	<p>システム工学の図表を作成</p>
-	<p>ツール一覧</p>
-	<a href="/tools/needsList/">ニーズリスト</a>
+<BaseLayout title="SEAT - System Engineering Assist Tool">
+    <div class="container">
+        <header>
+            <div>
+                <h1>SEAT</h1>
+                <div class="subtitle">System Engineering Assist Tool - システム工学の図表を作成</div>
+            </div>
+        </header>
+
+        <div class="card">
+            <div class="card-title">ツール一覧</div>
+            <ul class="tool-list">
+                <li class="tool-item">
+                    <div class="tool-info">
+                        <div class="tool-name">ニーズリスト</div>
+                        <p class="tool-description">ステークホルダのニーズを階層構造で整理し、一覧表を作成します。</p>
+                    </div>
+                    <a href="/tools/needsList/" class="btn btn-primary">作成画面へ →</a>
+                </li>
+                <li class="tool-item tool-item-disabled">
+                    <div class="tool-info">
+                        <div class="tool-name">SWOT分析</div>
+                        <p class="tool-description">強み・弱み・機会・脅威の4要素を分析・整理します。（準備中）</p>
+                    </div>
+                    <button class="btn btn-secondary" disabled>準備中</button>
+                </li>
+            </ul>
+        </div>
+    </div>
 </BaseLayout>

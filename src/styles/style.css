@@ -144,3 +144,70 @@ select:focus {
     align-items: center;
     border: 1px solid #e2e8f0;
 }
+
+
+.btn:disabled,
+.btn[disabled] {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+/* ---------- ツール一覧（トップページ） ---------- */
+
+.tool-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.tool-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    padding: 16px 20px;
+    background-color: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    transition: background-color 0.2s, border-color 0.2s;
+}
+
+.tool-item:hover:not(.tool-item-disabled) {
+    background-color: #edf2f7;
+    border-color: #cbd5e0;
+}
+
+.tool-item-disabled {
+    opacity: 0.7;
+}
+
+.tool-info {
+    flex: 1;
+}
+
+.tool-name {
+    font-size: 1.05rem;
+    font-weight: bold;
+    color: #2d3748;
+    margin-bottom: 4px;
+}
+
+.tool-description {
+    font-size: 0.85rem;
+    color: #718096;
+    margin: 0;
+}
+
+@media (max-width: 600px) {
+    .tool-item {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .tool-item .btn {
+        align-self: flex-end;
+    }
+}
