@@ -1,0 +1,70 @@
+/* AHP階層図専用のスタイル（ステークホルダ・ニーズの一覧は needsList.css のクラスを流用） */
+
+/* ---------- 入力ページ ---------- */
+
+.ahp-goal-input {
+    width: 100%;
+}
+
+.ahp-mode {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+    align-items: center;
+    margin-top: 10px;
+    padding-top: 12px;
+    border-top: 1px dashed #e2e8f0;
+    font-size: 0.9rem;
+}
+
+.ahp-mode-title {
+    font-weight: bold;
+    color: #4a5568;
+}
+
+.ahp-mode label {
+    display: flex;
+    gap: 4px;
+    align-items: center;
+    cursor: pointer;
+}
+
+/* ---------- 階層図コンポーネント ---------- */
+
+.ahp-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.ahp-canvas {
+    overflow-x: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: #ffffff;
+    padding: 10px;
+}
+
+.ahp-canvas svg {
+    display: block;
+    margin: 0 auto;
+}
+
+/* ---------- 出力ページ ---------- */
+
+.ahp-code {
+    margin: 0;
+    padding: 12px 15px;
+    max-height: 300px;
+    overflow: auto;
+    background-color: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.85rem;
+}
+
+.ahp-code code {
+    font-family: Consolas, Menlo, monospace;
+}

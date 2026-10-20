@@ -1,0 +1,34 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import AhpDiagram from '../../../components/AhpDiagram.astro';
+import '../../../styles/style.css';
+import '../../../styles/ahp.css';
+---
+
+<BaseLayout title="AHP階層図">
+    <div class="container">
+        <header>
+            <div>
+                <h1>AHP階層図</h1>
+                <div class="subtitle">総合目的 → 評価基準 → 代替案</div>
+            </div>
+            <a class="btn btn-secondary" href="/tools/ahp/">← 編集に戻る</a>
+        </header>
+
+        <div class="card">
+            <div class="card-title">AHP階層図</div>
+            <AhpDiagram id="ahp-output" />
+        </div>
+
+        <div class="card">
+            <div class="card-title">Mermaid コード</div>
+            <pre class="ahp-code"><code id="mermaid-code"></code></pre>
+        </div>
+    </div>
+</BaseLayout>
+
+<script>
+    import { initAhpOutput } from '../../../scripts/ahp/output';
+
+    initAhpOutput();
+</script>
