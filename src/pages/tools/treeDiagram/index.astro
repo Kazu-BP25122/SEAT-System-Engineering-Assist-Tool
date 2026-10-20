@@ -1,0 +1,66 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import '../../../styles/style.css';
+import '../../../styles/treeDiagram.css';
+---
+
+<BaseLayout title="展開図">
+    <div class="container">
+        <header>
+            <div>
+                <h1>展開図作成</h1>
+                <div class="subtitle">ニーズ展開図・目的展開図などの樹形図（ツリーダイアグラム）を作成</div>
+            </div>
+            <div>
+                <button class="btn btn-secondary" id="reset-btn">初期化</button>
+            </div>
+        </header>
+
+        <!-- 第1層: テーマ設定 -->
+        <div class="card">
+            <div class="card-title">1. 全体テーマ・最上位目的（第1層）</div>
+            <div class="theme-input-group">
+                <input
+                    type="text"
+                    id="theme-input"
+                    class="theme-input"
+                    placeholder="例: 双方の記憶に残る文化祭の創出"
+                />
+            </div>
+        </div>
+
+        <!-- 第2層: 大項目追加 -->
+        <div class="card">
+            <div class="card-title">2. 大項目（第2層）の追加</div>
+            <div class="form-row">
+                <input
+                    type="text"
+                    id="new-cat-input"
+                    class="input-flex"
+                    placeholder="例: 来場者の記憶への定着, 主催者の記憶への定着"
+                />
+                <button class="btn btn-primary" id="add-cat-btn">大項目を追加</button>
+            </div>
+        </div>
+
+        <!-- 第2〜4層: 階層編集 -->
+        <div class="card">
+            <div class="card-title">3. 階層の編集（第2層 〜 第4層）</div>
+            <div id="tree-editor-root" class="tree-editor-container">データを読み込み中...</div>
+        </div>
+
+        <!-- フッターバー -->
+        <div class="footer-bar">
+            <div>
+                <span id="data-status" class="status-text">変更内容は自動保存されています</span>
+            </div>
+            <button class="btn btn-success" id="save-navigate-btn">確定して展開図を出力 →</button>
+        </div>
+    </div>
+</BaseLayout>
+
+<script>
+    import { initTreeDiagramInput } from '../../../scripts/treeDiagram/input';
+
+    initTreeDiagramInput();
+</script>

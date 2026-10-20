@@ -1,0 +1,33 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import '../../../styles/style.css';
+import '../../../styles/treeDiagram.css';
+---
+
+<BaseLayout title="展開図">
+    <div class="container container-wide">
+        <header>
+            <div>
+                <h1>展開図</h1>
+                <div class="subtitle">ツリーダイアグラム出力結果</div>
+            </div>
+            <div class="diagram-header-actions">
+                <a class="btn btn-secondary" href="/tools/treeDiagram/">← 編集に戻る</a>
+                <button class="btn btn-primary" id="export-png-btn">画像保存 (PNG)</button>
+                <button class="btn btn-secondary" id="print-btn">印刷 / PDF</button>
+            </div>
+        </header>
+
+        <div class="diagram-card">
+            <div class="diagram-viewport">
+                <div id="diagram-container">データを読み込み中...</div>
+            </div>
+        </div>
+    </div>
+</BaseLayout>
+
+<script>
+    import { initTreeDiagramOutput } from '../../../scripts/treeDiagram/output';
+
+    initTreeDiagramOutput();
+</script>
