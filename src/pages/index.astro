@@ -1,6 +1,35 @@
 ---
 import BaseLayout from '../layouts/BaseLayout.astro';
 import '../styles/style.css';
+
+// tools ディレクトリ内の各ツールの index.astro を自動探索
+const toolFiles = import.meta.glob<string>('./tools/*/index.astro', {
+    query: '?raw',
+    import: 'default',
+    eager: true,
+});
+
+// 各ツールのファイル内容からパスとタイトルを取得
+const tools = Object.entries(toolFiles).map(([filePath, content]) => {
+    const matchTool = filePath.match(/\.\/tools\/([^/]+)\/index\.astro/);
+    const toolId = matchTool ? matchTool[1] : '';
+
+    // <BaseLayout title="..."> からタイトル名を取得（なければ <h1> またはディレクトリ名）
+    const titleMatch =
+        content.match(/<BaseLayout[^>]*\btitle=["']([^"']+)["']/i) ??
+        content.match(/<BaseLayout[^>]*\btitle=\{["']([^"']+)["']\}/i) ??
+        content.match(/<h1[^>]*>([^<]+)<\/h1>/i);
+    const title = titleMatch ? titleMatch[1].trim() : toolId;
+
+    return {
+        id: toolId,
+        title,
+        href: `/tools/${toolId}/`,
+    };
+});
+
+// ツールID順にソート
+tools.sort((a, b) => a.id.localeCompare(b.id));
 ---
 
 <BaseLayout title="SEAT - System Engineering Assist Tool">
@@ -14,22 +43,20 @@ import '../styles/style.css';
 
         <div class="card">
             <div class="card-title">ツール一覧</div>
-            <ul class="tool-list">
-                <li class="tool-item">
-                    <div class="tool-info">
-                        <div class="tool-name">ニーズリスト</div>
-                        <p class="tool-description">ステークホルダのニーズを階層構造で整理し、一覧表を作成します。</p>
-                    </div>
-                    <a href="/tools/needsList/" class="btn btn-primary">作成画面へ →</a>
-                </li>
-                <li class="tool-item tool-item-disabled">
-                    <div class="tool-info">
-                        <div class="tool-name">SWOT分析</div>
-                        <p class="tool-description">強み・弱み・機会・脅威の4要素を分析・整理します。（準備中）</p>
-                    </div>
-                    <button class="btn btn-secondary" disabled>準備中</button>
-                </li>
-            </ul>
+            {tools.length > 0 ? (
+                <ul class="tool-list">
+                    {tools.map((tool) => (
+                        <li class="tool-item">
+                            <div class="tool-info">
+                                <div class="tool-name">{tool.title}</div>
+                            </div>
+                            <a href={tool.href} class="btn btn-primary">作成画面へ →</a>
+                        </li>
+                    ))}
+                </ul>
+            ) : (
+                <p>利用可能なツールはありません。</p>
+            )}
         </div>
     </div>
 </BaseLayout>
