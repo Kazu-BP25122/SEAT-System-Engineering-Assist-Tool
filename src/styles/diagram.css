@@ -1,0 +1,83 @@
+/* DiagramPanel コンポーネント（図の表示・保存）のスタイル */
+
+.diagram-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+}
+
+.diagram-orientation {
+    display: inline-flex;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    overflow: hidden;
+}
+
+.diagram-orientation-btn {
+    padding: 6px 14px;
+    border: none;
+    background-color: #ffffff;
+    color: #4a5568;
+    font-size: 0.85rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.diagram-orientation-btn + .diagram-orientation-btn {
+    border-left: 1px solid #cbd5e0;
+}
+
+.diagram-orientation-btn.is-active {
+    background-color: #3182ce;
+    color: #ffffff;
+}
+
+.diagram-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.diagram-actions .btn {
+    font-size: 0.8rem;
+    padding: 6px 12px;
+}
+
+.diagram-canvas {
+    overflow: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    background-color: #ffffff;
+    padding: 10px;
+}
+
+.diagram-canvas svg {
+    display: block;
+    margin: 0 auto;
+}
+
+.diagram-code-block {
+    margin-top: 16px;
+}
+
+.diagram-code-title {
+    font-weight: bold;
+    font-size: 0.9rem;
+    color: #4a5568;
+    margin-bottom: 6px;
+}
+
+.diagram-code {
+    margin: 0;
+    padding: 12px 15px;
+    max-height: 300px;
+    overflow: auto;
+    background-color: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-family: Consolas, Menlo, monospace;
+}
