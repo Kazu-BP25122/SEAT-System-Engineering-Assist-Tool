@@ -1,0 +1,495 @@
+/* 展開図専用スタイル */
+
+/* ==========================================================================
+   入力ページ (Tree Diagram Editor)
+   ========================================================================== */
+
+.preset-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.preset-title {
+    font-size: 0.85rem;
+    font-weight: bold;
+    color: #4a5568;
+    margin-right: 4px;
+}
+
+.btn-preset {
+    font-size: 0.82rem;
+    padding: 6px 12px;
+    background-color: #edf2f7;
+    color: #2d3748;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-preset:hover {
+    background-color: #e2e8f0;
+    border-color: #a0aec0;
+}
+
+/* 第1層 テーマ入力 */
+.theme-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+}
+
+.theme-input-group label {
+    font-size: 0.9rem;
+    font-weight: bold;
+    color: #4a5568;
+}
+
+.theme-input {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 1.05rem;
+    font-weight: bold;
+    border: 2px solid #cbd5e0;
+    border-radius: 6px;
+    outline: none;
+    transition: border-color 0.2s;
+}
+
+.theme-input:focus {
+    border-color: #3182ce;
+}
+
+/* フォーム行 */
+.form-row {
+    display: flex;
+    gap: 10px;
+}
+
+.input-flex {
+    flex: 1;
+    padding: 8px 12px;
+    border: 1px solid #cbd5e0;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    outline: none;
+}
+
+.input-flex:focus {
+    border-color: #3182ce;
+}
+
+/* ツリー編集エリア */
+.tree-editor-container {
+    margin-top: 10px;
+}
+
+/* 第2層: カテゴリブロック */
+.cat-block {
+    border: 1px solid #cbd5e0;
+    border-radius: 8px;
+    margin-bottom: 20px;
+    background-color: #ffffff;
+    overflow: hidden;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.04);
+}
+
+.cat-header {
+    background-color: #edf2f7;
+    padding: 12px 16px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #e2e8f0;
+}
+
+.cat-title-area {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex: 1;
+}
+
+.level-tag {
+    font-size: 0.72rem;
+    font-weight: bold;
+    padding: 2px 6px;
+    border-radius: 4px;
+    background-color: #4a5568;
+    color: #ffffff;
+    white-space: nowrap;
+}
+
+.level-tag.tag-l2 {
+    background-color: #2b6cb0;
+}
+
+.level-tag.tag-l3 {
+    background-color: #2c7a7b;
+}
+
+.level-tag.tag-l4 {
+    background-color: #4a5568;
+}
+
+.cat-title-text {
+    font-size: 1.05rem;
+    font-weight: bold;
+    color: #2d3748;
+}
+
+.cat-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+/* 第3層: サブカテゴリブロック */
+.cat-body {
+    padding: 14px 16px;
+}
+
+.sub-block {
+    margin: 12px 0 14px 18px;
+    border-left: 3px solid #cbd5e0;
+    padding-left: 14px;
+    background-color: #fafbfc;
+    border-radius: 0 6px 6px 0;
+    padding: 10px 14px;
+    border: 1px solid #e2e8f0;
+    border-left: 4px solid #319795;
+}
+
+.sub-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.sub-title-area {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.sub-title-text {
+    font-size: 0.95rem;
+    font-weight: bold;
+    color: #2d3748;
+}
+
+/* 第4層: 詳細項目リスト */
+.item-list {
+    list-style: none;
+    padding: 0;
+    margin: 6px 0 10px 0;
+}
+
+.item-row {
+    padding: 6px 10px;
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 4px;
+    margin-bottom: 5px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.88rem;
+}
+
+.item-bullet {
+    color: #718096;
+    margin-right: 6px;
+}
+
+.item-text {
+    flex: 1;
+    color: #2d3748;
+}
+
+.empty-items-text {
+    font-size: 0.82rem;
+    color: #a0aec0;
+    margin: 6px 0;
+    font-style: italic;
+}
+
+/* インライン追加フォーム */
+.add-inline-form {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.add-sub-area {
+    margin-top: 14px;
+    padding-top: 12px;
+    border-top: 1px dashed #cbd5e0;
+}
+
+.btn-inline {
+    font-size: 0.82rem;
+    padding: 5px 12px;
+    white-space: nowrap;
+}
+
+.btn-convert {
+    font-size: 0.78rem;
+    padding: 4px 10px;
+}
+
+.empty-tree {
+    color: #a0aec0;
+    text-align: center;
+    padding: 30px;
+    font-size: 0.95rem;
+}
+
+.footer-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 20px;
+    padding-top: 15px;
+    border-top: 1px solid #e2e8f0;
+}
+
+.status-text {
+    font-size: 0.85rem;
+    color: #718096;
+}
+
+/* 展開図出力画面用の広幅コンテナ */
+.container-wide {
+    max-width: 1400px;
+    margin: 0 auto;
+}
+
+.tree-leaf-empty {
+    color: #a0aec0;
+    font-style: italic;
+}
+
+/* ==========================================================================
+   出力ページ (Tree Diagram Viewer & Export)
+   ========================================================================== */
+
+.diagram-card {
+    background: #ffffff;
+    padding: 24px;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+    margin-bottom: 20px;
+    overflow: hidden;
+}
+
+.diagram-header-actions {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.diagram-viewport {
+    width: 100%;
+    overflow-x: auto;
+    overflow-y: hidden;
+    padding: 40px 20px;
+    background-color: #ffffff;
+    box-sizing: border-box;
+    display: flex;
+    justify-content: center;
+}
+
+.diagram-canvas-wrapper {
+    position: relative;
+    display: inline-block;
+    min-width: 100%;
+}
+
+/* SVG 接続線レイヤー */
+.tree-svg-layer {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 1;
+}
+
+/* HTML ノード配置レイヤー */
+.tree-nodes-layer {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: max-content;
+    margin: 0 auto;
+}
+
+/* レベル共通ノードスタイル（白背景・黒枠2px・サンセリフ・シャープ） */
+.tree-node {
+    border: 2px solid #000000;
+    background-color: #ffffff;
+    color: #000000;
+    box-sizing: border-box;
+    line-height: 1.4;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* 第1層: ルートノード */
+.tree-level-1 {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 60px;
+    width: 100%;
+}
+
+.tree-node-root {
+    padding: 12px 28px;
+    font-size: 1.15rem;
+    font-weight: bold;
+    text-align: center;
+    max-width: 500px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* 第2層: カテゴリ群のラッパー */
+.tree-categories-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 40px;
+    width: 100%;
+}
+
+/* 各カテゴリの枝（ブランチ） */
+.tree-category-branch {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+/* 第2層ノード */
+.tree-node-cat {
+    padding: 10px 22px;
+    font-size: 1.05rem;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 60px;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* 第3層・第4層の並びラッパー */
+.tree-sub-wrapper {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    width: 100%;
+}
+
+/* 各中項目の縦カラム（第3層 ＋ 第4層） */
+.tree-column {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 190px;
+    min-width: 170px;
+    max-width: 220px;
+}
+
+/* 第3層ノード */
+.tree-node-sub {
+    width: 100%;
+    padding: 10px 14px;
+    font-size: 0.95rem;
+    font-weight: bold;
+    text-align: center;
+    margin-bottom: 30px;
+    min-height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+/* 第4層ノード（箇条書き詳細項目） */
+.tree-node-leaf {
+    width: 100%;
+    padding: 12px 14px;
+    font-size: 0.88rem;
+    text-align: left;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+
+.tree-leaf-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.tree-leaf-item {
+    position: relative;
+    padding-left: 14px;
+    margin-bottom: 6px;
+    line-height: 1.5;
+    word-break: break-word;
+}
+
+.tree-leaf-item:last-child {
+    margin-bottom: 0;
+}
+
+.tree-leaf-item::before {
+    content: "・";
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
+/* 第3層をスキップした場合の直下ノード */
+.tree-direct-leaf-wrapper {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* 印刷用スタイル */
+@media print {
+    body {
+        background-color: #ffffff !important;
+        padding: 0 !important;
+    }
+
+    header,
+    .btn,
+    .diagram-header-actions,
+    a {
+        display: none !important;
+    }
+
+    .container {
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
+    }
+
+    .diagram-card {
+        box-shadow: none !important;
+        padding: 0 !important;
+        border: none !important;
+    }
+
+    .diagram-viewport {
+        padding: 20px 0 !important;
+        overflow: visible !important;
+    }
+
+    .tree-node {
+        box-shadow: none !important;
+    }
+}
