@@ -1,0 +1,37 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import '../../../styles/style.css';
+import '../../../styles/swot.css';
+---
+
+<BaseLayout title="SWOT分析">
+    <div class="container">
+        <header>
+            <div>
+                <h1>SWOT / クロスSWOTデータ編集</h1>
+                <div class="subtitle">SWOT分析およびクロスSWOT分析の項目を入力・編集します</div>
+            </div>
+            <div>
+                <button class="btn btn-secondary" id="reset-btn">初期データに戻す</button>
+            </div>
+        </header>
+
+        <!-- メイン入力グリッド -->
+        <div id="swot-cards-container" class="swot-grid">
+            <p class="status-text">データを読み込み中...</p>
+        </div>
+
+        <div class="footer-bar">
+            <div>
+                <span id="data-status" class="status-text">変更内容は自動保存されています</span>
+            </div>
+            <button class="btn btn-success" id="save-navigate-btn">確定して表（出力画面）を出力 →</button>
+        </div>
+    </div>
+</BaseLayout>
+
+<script>
+    import { initSwot } from '../../../scripts/swot/input';
+
+    initSwot();
+</script>

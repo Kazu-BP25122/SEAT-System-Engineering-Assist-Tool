@@ -1,0 +1,33 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import '../../../styles/style.css';
+import '../../../styles/swot.css';
+---
+
+<BaseLayout title="SWOT分析">
+    <div class="container">
+        <header>
+            <div>
+                <h1>SWOT分析</h1>
+                <div class="subtitle">SWOT / クロスSWOT分析結果</div>
+            </div>
+            <a class="btn btn-secondary" href="/tools/swot/">← 編集に戻る</a>
+        </header>
+
+        <div class="card">
+            <div class="card-title">SWOT 分析の結果</div>
+            <div id="swot-table-container">データを読み込み中...</div>
+        </div>
+
+        <div class="card">
+            <div class="card-title">クロス SWOT 分析の結果</div>
+            <div id="cross-swot-table-container">データを読み込み中...</div>
+        </div>
+    </div>
+</BaseLayout>
+
+<script>
+    import { initSwotOutput } from '../../../scripts/swot/output';
+
+    initSwotOutput();
+</script>
