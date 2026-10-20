@@ -1,0 +1,38 @@
+---
+// 入力欄と図のプレビューを並べるレイアウト。
+// PC（幅 1024px 以上）では左右 2 列、スマホではタブで「入力」と「図」を切り替える。
+// 使い方: <Workspace><Fragment slot="editor">…</Fragment><Fragment slot="preview">…</Fragment></Workspace>
+import '../styles/workspace.css';
+---
+
+<div class="workspace" data-workspace data-view="editor">
+    <div class="workspace-tabs" role="tablist">
+        <button type="button" class="workspace-tab is-active" role="tab" aria-selected="true" data-workspace-tab="editor">入力</button>
+        <button type="button" class="workspace-tab" role="tab" aria-selected="false" data-workspace-tab="preview">図</button>
+    </div>
+    <div class="workspace-editor">
+        <slot name="editor" />
+    </div>
+    <div class="workspace-preview">
+        <slot name="preview" />
+    </div>
+</div>
+
+<script>
+    // スマホ表示時のタブ切り替え（PC では両方表示されるので見た目に影響しない）
+    document.querySelectorAll<HTMLElement>('[data-workspace]').forEach(workspace => {
+        const tabs = workspace.querySelectorAll<HTMLElement>('[data-workspace-tab]');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', () => {
+                const view = tab.dataset.workspaceTab ?? 'editor';
+                workspace.dataset.view = view;
+                tabs.forEach(t => {
+                    const active = t === tab;
+                    t.classList.toggle('is-active', active);
+                    t.setAttribute('aria-selected', String(active));
+                });
+                workspace.scrollIntoView({ block: 'start' });
+            });
+        });
+    });
+</script>

@@ -1,12 +1,11 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
-import AhpDiagram from '../../../components/AhpDiagram.astro';
+import DiagramPanel from '../../../components/DiagramPanel.astro';
 import '../../../styles/style.css';
-import '../../../styles/ahp.css';
 ---
 
 <BaseLayout title="AHP階層図">
-    <div class="container">
+    <div class="container container-wide">
         <header>
             <div>
                 <h1>AHP階層図</h1>
@@ -16,13 +15,7 @@ import '../../../styles/ahp.css';
         </header>
 
         <div class="card">
-            <div class="card-title">AHP階層図</div>
-            <AhpDiagram id="ahp-output" />
-        </div>
-
-        <div class="card">
-            <div class="card-title">Mermaid コード</div>
-            <pre class="ahp-code"><code id="mermaid-code"></code></pre>
+            <DiagramPanel id="ahp-output" showCode />
         </div>
     </div>
 </BaseLayout>

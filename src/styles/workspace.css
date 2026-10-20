@@ -1,0 +1,67 @@
+/* Workspace コンポーネント（入力欄と図のプレビューを並べるレイアウト）のスタイル */
+
+/* ---------- スマホ・タブレット：タブで切り替え ---------- */
+
+.workspace-tabs {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    display: flex;
+    margin-bottom: 15px;
+    padding: 6px;
+    background-color: #ffffff;
+    border-radius: 10px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+.workspace-tab {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 6px;
+    background: none;
+    color: #4a5568;
+    font-size: 0.95rem;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.workspace-tab.is-active {
+    background-color: #3182ce;
+    color: #ffffff;
+}
+
+.workspace[data-view="editor"] .workspace-preview,
+.workspace[data-view="preview"] .workspace-editor {
+    display: none;
+}
+
+/* ---------- PC：左右 2 列 ---------- */
+
+@media (min-width: 1024px) {
+    .workspace {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr);
+        gap: 20px;
+        align-items: start;
+    }
+
+    .workspace-tabs {
+        display: none;
+    }
+
+    .workspace[data-view] .workspace-editor,
+    .workspace[data-view] .workspace-preview {
+        display: block;
+    }
+
+    /* プレビューはスクロールしても画面内に残す */
+    .workspace-preview {
+        position: sticky;
+        top: 20px;
+    }
+
+    .workspace-preview .diagram-canvas {
+        max-height: calc(100vh - 220px);
+    }
+}

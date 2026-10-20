@@ -4,12 +4,14 @@ import { escapeHtml } from '../utils';
 import { loadNeedsData } from '../needsList/data';
 import { DEFAULT_AHP_DATA, loadAhpData, saveAhpData } from './data';
 import type { AhpData, CriteriaMode, Stakeholder } from './data';
-import { mountAhpDiagram } from './diagram';
+import { mountDiagramPanel } from '../diagram/panel';
+import type { DiagramContent } from '../diagram/panel';
+import { ahpDiagramContent } from './diagram';
 
 const OUTPUT_PAGE = '/tools/ahp/output';
 
 let ahpData: AhpData = structuredClone(DEFAULT_AHP_DATA);
-let renderDiagram: (data: AhpData) => void = () => {};
+let renderDiagram: (content: DiagramContent) => void = () => {};
 
 // ---------- データ操作 ----------
 
@@ -19,6 +21,10 @@ function persist(): void {
     if (statusEl) {
         statusEl.innerText = `変更をローカルに保存しました (${new Date().toLocaleTimeString()})`;
     }
+}
+
+function updateDiagram(): void {
+    renderDiagram(ahpDiagramContent(ahpData));
 }
 
 /** 保存して画面全体を再描画する */
@@ -96,7 +102,7 @@ function syncFormValues(): void {
 function renderAll(): void {
     renderStakeholders();
     renderAlternatives();
-    renderDiagram(ahpData);
+    updateDiagram();
 }
 
 // ---------- 操作 ----------
@@ -178,7 +184,8 @@ function importFromNeedsList(): void {
 
 function resetToDefault(): void {
     if (!confirm('入力内容をすべて消去しますか？')) return;
-    ahpData = structuredClone(DEFAULT_AHP_DATA);
+    // 図の向きは入力内容ではないので引き継ぐ
+    ahpData = { ...structuredClone(DEFAULT_AHP_DATA), orientation: ahpData.orientation };
     syncFormValues();
     commit();
 }
@@ -232,14 +239,14 @@ function bindEvents(): void {
     document.getElementById('goal-input')?.addEventListener('input', e => {
         ahpData.goal = (e.target as HTMLInputElement).value;
         persist();
-        renderDiagram(ahpData);
+        updateDiagram();
     });
 
     document.querySelectorAll<HTMLInputElement>('input[name="criteria-mode"]').forEach(radio => {
         radio.addEventListener('change', () => {
             ahpData.criteriaMode = radio.value as CriteriaMode;
             persist();
-            renderDiagram(ahpData);
+            updateDiagram();
         });
     });
 
@@ -262,7 +269,16 @@ function bindEvents(): void {
 export function initAhpInput(): void {
     ahpData = loadAhpData();
     const diagramRoot = document.getElementById('ahp-preview');
-    if (diagramRoot) renderDiagram = mountAhpDiagram(diagramRoot);
+    if (diagramRoot) {
+        renderDiagram = mountDiagramPanel(diagramRoot, {
+            filename: 'ahp_hierarchy',
+            orientation: ahpData.orientation,
+            onOrientationChange: orientation => {
+                ahpData.orientation = orientation;
+                persist();
+            },
+        });
+    }
 
     bindEvents();
     syncFormValues();

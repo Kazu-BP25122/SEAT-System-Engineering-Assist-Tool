@@ -1,5 +1,7 @@
 // AHP階層図の入力・出力ページで共有するデータ定義
 
+import type { Orientation } from '../diagram/svg';
+
 /** 評価基準として並べる対象（ステークホルダ単位 / ニーズ項目単位） */
 export type CriteriaMode = 'stakeholder' | 'need';
 
@@ -11,6 +13,7 @@ export interface Stakeholder {
 export interface AhpData {
     goal: string;
     criteriaMode: CriteriaMode;
+    orientation: Orientation;
     stakeholders: Stakeholder[];
     alternatives: string[];
 }
@@ -21,6 +24,7 @@ export const STORAGE_KEY = 'seat_ahp_data';
 export const DEFAULT_AHP_DATA: AhpData = {
     goal: '',
     criteriaMode: 'stakeholder',
+    orientation: 'vertical',
     stakeholders: [],
     alternatives: [],
 };
@@ -29,6 +33,7 @@ export const DEFAULT_AHP_DATA: AhpData = {
 export const SAMPLE_AHP_DATA: AhpData = {
     goal: '文化祭の模擬店で出すメニューを決める',
     criteriaMode: 'stakeholder',
+    orientation: 'vertical',
     stakeholders: [
         { name: '来場者', needs: ['美味しい物を食べたい', '列に並びたくない'] },
         { name: '運営スタッフ', needs: ['調理が簡単であってほしい', '利益を出したい'] },
@@ -49,6 +54,7 @@ function normalize(raw: unknown): AhpData {
     return {
         goal: typeof obj.goal === 'string' ? obj.goal : '',
         criteriaMode: obj.criteriaMode === 'need' ? 'need' : 'stakeholder',
+        orientation: obj.orientation === 'horizontal' ? 'horizontal' : 'vertical',
         stakeholders: stakeholders
             .filter((s): s is Record<string, unknown> => typeof s === 'object' && s !== null && typeof s.name === 'string')
             .map(s => ({ name: s.name as string, needs: toStringArray(s.needs) })),

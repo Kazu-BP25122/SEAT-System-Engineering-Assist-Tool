@@ -1,0 +1,36 @@
+---
+// 図の表示領域と、向きの切り替え・保存・コードのコピーを行うツールバー。
+// 描画はクライアント側で mountDiagramPanel(要素, オプション) が返す関数に図の中身を渡して行う。
+import '../styles/diagram.css';
+
+interface Props {
+    id: string;
+    /** コピーできるコードの名前（例: Mermaid） */
+    codeName?: string;
+    /** 図の下にコードを表示する */
+    showCode?: boolean;
+}
+
+const { id, codeName = 'Mermaid', showCode = false } = Astro.props;
+---
+
+<div class="diagram-panel" id={id}>
+    <div class="diagram-toolbar">
+        <div class="diagram-orientation" role="group" aria-label="図の向き">
+            <button type="button" class="diagram-orientation-btn" data-diagram-orientation="vertical">縦向き</button>
+            <button type="button" class="diagram-orientation-btn" data-diagram-orientation="horizontal">横向き</button>
+        </div>
+        <div class="diagram-actions">
+            <button type="button" class="btn btn-secondary" data-diagram-action="download-svg">SVG で保存</button>
+            <button type="button" class="btn btn-secondary" data-diagram-action="download-png">PNG で保存</button>
+            <button type="button" class="btn btn-secondary" data-diagram-action="copy-code">{codeName} コードをコピー</button>
+        </div>
+    </div>
+    <div class="diagram-canvas" data-diagram-canvas>図を生成中...</div>
+    {showCode && (
+        <div class="diagram-code-block">
+            <div class="diagram-code-title">{codeName} コード</div>
+            <pre class="diagram-code"><code data-diagram-code></code></pre>
+        </div>
+    )}
+</div>
