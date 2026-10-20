@@ -12,17 +12,9 @@ import '../../../styles/treeDiagram.css';
                 <div class="subtitle">ニーズ展開図・目的展開図などの樹形図（ツリーダイアグラム）を作成</div>
             </div>
             <div>
-                <a href="/" class="btn btn-secondary">← ツール一覧</a>
+                <button class="btn btn-secondary" id="reset-btn">初期化</button>
             </div>
         </header>
-
-        <!-- プリセット・サンプル読み込み -->
-        <div class="preset-container">
-            <span class="preset-title">サンプル読み込み:</span>
-            <button type="button" class="btn-preset" id="preset-needs">サンプル1: ニーズ展開図</button>
-            <button type="button" class="btn-preset" id="preset-purpose">サンプル2: 目的展開図</button>
-            <button type="button" class="btn-preset" id="preset-empty">新規作成（空にする）</button>
-        </div>
 
         <!-- 第1層: テーマ設定 -->
         <div class="card">

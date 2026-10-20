@@ -3,9 +3,6 @@
 import { escapeHtml } from '../utils';
 import {
     DEFAULT_TREE_DATA,
-    EMPTY_TREE_DATA,
-    SAMPLE_NEEDS_TREE,
-    SAMPLE_PURPOSE_TREE,
     generateId,
     loadTreeData,
     saveTreeData,
@@ -35,15 +32,12 @@ function updateStatusText(): void {
     }
 }
 
-// ---------- プリセット操作 ----------
-
-function applyPreset(presetData: TreeDiagramData, confirmMsg?: string): void {
-    if (confirmMsg && !confirm(confirmMsg)) return;
-    treeData = structuredClone(presetData);
-    // テーマ入力欄の同期
+function resetToDefault(): void {
+    if (!confirm('初期データにリセットしますか？現在の編集内容は消去されます。')) return;
+    treeData = structuredClone(DEFAULT_TREE_DATA);
     const themeInput = document.getElementById('theme-input') as HTMLInputElement | null;
     if (themeInput) {
-        themeInput.value = treeData.title;
+        themeInput.value = '';
     }
     commit();
 }
@@ -112,7 +106,7 @@ function renderCategoryBlock(cat: TreeCategory): string {
             </div>
         `;
     } else {
-        // 第3層をまだ設けていない場合：直接項目を入れるか、中項目に切り替えるか
+        // 第3層をまだ設けていない場合
         const directItems = cat.items || [];
         bodyHtml = `
             <div class="direct-items-area">
@@ -161,7 +155,7 @@ function renderTreeEditor(): void {
 // ---------- 操作ロジック ----------
 
 function handleThemeChange(val: string): void {
-    treeData.title = val.trim() || 'メインテーマを入力';
+    treeData.title = val.trim();
     persist();
     updateStatusText();
 }
@@ -311,23 +305,13 @@ function saveAndNavigate(): void {
 // ---------- イベント設定 ----------
 
 function bindEvents(): void {
+    // 初期化ボタン
+    document.getElementById('reset-btn')?.addEventListener('click', resetToDefault);
+
     // テーマ入力の変更イベント
     const themeInput = document.getElementById('theme-input') as HTMLInputElement | null;
     themeInput?.addEventListener('input', e => {
         handleThemeChange((e.target as HTMLInputElement).value);
-    });
-
-    // プリセットボタン群
-    document.getElementById('preset-needs')?.addEventListener('click', () => {
-        applyPreset(SAMPLE_NEEDS_TREE, '「ニーズ展開図」のサンプルデータを読み込みますか？（現在の編集内容は上書きされます）');
-    });
-
-    document.getElementById('preset-purpose')?.addEventListener('click', () => {
-        applyPreset(SAMPLE_PURPOSE_TREE, '「目的展開図」のサンプルデータを読み込みますか？（現在の編集内容は上書きされます）');
-    });
-
-    document.getElementById('preset-empty')?.addEventListener('click', () => {
-        applyPreset(EMPTY_TREE_DATA, '新規作成（データを空にする）しますか？（現在の編集内容は上書きされます）');
     });
 
     // 大項目追加

@@ -17,10 +17,20 @@ function renderLeafList(items: string[]): string {
 }
 
 function renderTreeHtml(data: TreeDiagramData): string {
+    const isDataEmpty = !data.title && data.categories.length === 0;
+    if (isDataEmpty) {
+        return `
+            <div class="empty-diagram-message">
+                <p>展開図のデータが登録されていません。</p>
+                <p>上の「← 編集に戻る」ボタンからデータを入力してください。</p>
+            </div>
+        `;
+    }
+
     const rootHtml = `
         <div class="tree-level tree-level-1">
             <div class="tree-node tree-node-root" id="node-root">
-                ${escapeHtml(data.title)}
+                ${escapeHtml(data.title || '（無題）')}
             </div>
         </div>
     `;
@@ -77,7 +87,7 @@ function renderTreeHtml(data: TreeDiagramData): string {
 
     return `
         <div class="diagram-canvas-wrapper" id="diagram-canvas-wrapper">
-            <svg class="tree-svg-layer" id="tree-svg-layer"></svg>
+            <svg class="tree-svg-layer" id="tree-svg-layer" xmlns="http://www.w3.org/2000/svg"></svg>
             <div class="tree-nodes-layer" id="tree-nodes-layer">
                 ${rootHtml}
                 <div class="tree-categories-wrapper">
@@ -153,6 +163,7 @@ export function drawConnections(): void {
     if (!wrapper || !svg) return;
 
     const wrapperRect = wrapper.getBoundingClientRect();
+    svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     svg.setAttribute('width', `${wrapperRect.width}`);
     svg.setAttribute('height', `${wrapperRect.height}`);
     svg.setAttribute('viewBox', `0 0 ${wrapperRect.width} ${wrapperRect.height}`);
@@ -213,6 +224,52 @@ export function drawConnections(): void {
     `;
 }
 
+// ---------- テキスト折り返し処理 ----------
+
+/**
+ * テキストを最大幅に合わせて複数行に分割する（日本語・英語混在対応）
+ */
+function getWrappedLines(ctx: CanvasRenderingContext2D, text: string, maxWidth: number): string[] {
+    if (!text) return [];
+    const lines: string[] = [];
+    const paragraphs = text.split('\n');
+
+    for (const paragraph of paragraphs) {
+        if (!paragraph) {
+            lines.push('');
+            continue;
+        }
+
+        let currentLine = '';
+        for (let i = 0; i < paragraph.length; i++) {
+            const char = paragraph[i];
+            const testLine = currentLine + char;
+            const metrics = ctx.measureText(testLine);
+
+            if (metrics.width > maxWidth && currentLine.length > 0) {
+                // 句読点等の行頭禁則文字
+                const noStartChars = '、。，．）]｝?!！？';
+                if (noStartChars.includes(char)) {
+                    currentLine += char;
+                    lines.push(currentLine);
+                    currentLine = '';
+                    continue;
+                }
+
+                lines.push(currentLine);
+                currentLine = char;
+            } else {
+                currentLine = testLine;
+            }
+        }
+        if (currentLine) {
+            lines.push(currentLine);
+        }
+    }
+
+    return lines;
+}
+
 // ---------- 画像エクスポート (PNG) ----------
 
 function exportToPng(): void {
@@ -244,6 +301,7 @@ function exportToPng(): void {
     // 1. SVG 接続線を Canvas に描画
     const svgEl = document.getElementById('tree-svg-layer');
     if (svgEl) {
+        svgEl.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
         const svgString = new XMLSerializer().serializeToString(svgEl);
         const svgBlob = new Blob([svgString], { type: 'image/svg+xml;charset=utf-8' });
         const URL = window.URL || window.webkitURL || window;
@@ -262,18 +320,22 @@ function exportToPng(): void {
         };
 
         img.onerror = () => {
-            // SVG画像ロードに失敗した場合でもノードのみは描画
+            // SVG画像ロードに失敗した場合でもノードを描画
             renderNodesToCanvas(ctx, wrapperRect);
             downloadCanvas(canvas, `${currentData.title || '展開図'}.png`);
         };
 
         img.src = blobURL;
+    } else {
+        renderNodesToCanvas(ctx, wrapperRect);
+        downloadCanvas(canvas, `${currentData.title || '展開図'}.png`);
     }
 }
 
-/** 各 DOM ノードを Canvas に直接描画して高品位に仕上げる */
+/** 各 DOM ノードを Canvas に直接描画して高品位に仕上げる（折り返し対応） */
 function renderNodesToCanvas(ctx: CanvasRenderingContext2D, wrapperRect: DOMRect): void {
     const nodes = document.querySelectorAll<HTMLElement>('.tree-node');
+    const fontStack = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Hiragino Sans", "Hiragino Kaku Gothic ProN", "Yu Gothic", Meiryo, sans-serif';
 
     nodes.forEach(node => {
         const r = node.getBoundingClientRect();
@@ -289,38 +351,93 @@ function renderNodesToCanvas(ctx: CanvasRenderingContext2D, wrapperRect: DOMRect
         ctx.lineWidth = 2;
         ctx.strokeRect(x, y, w, h);
 
-        // テキストの描画
         ctx.fillStyle = '#000000';
 
         if (node.classList.contains('tree-node-root')) {
-            ctx.font = 'bold 18px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+            // 第1層（ルート）
+            const fontSize = 17;
+            ctx.font = `bold ${fontSize}px ${fontStack}`;
+            const maxTextWidth = Math.max(w - 32, 20); // 左右パディング考慮
+            const text = node.innerText.trim();
+            const lines = getWrappedLines(ctx, text, maxTextWidth);
+
+            const lineHeight = Math.round(fontSize * 1.35);
+            const totalH = lines.length * lineHeight;
+            const startY = y + (h - totalH) / 2 + lineHeight / 2;
+
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(node.innerText.trim(), x + w / 2, y + h / 2);
+            lines.forEach((line, idx) => {
+                ctx.fillText(line, x + w / 2, startY + idx * lineHeight);
+            });
         } else if (node.classList.contains('tree-node-cat')) {
-            ctx.font = 'bold 16px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+            // 第2層（大項目）
+            const fontSize = 15;
+            ctx.font = `bold ${fontSize}px ${fontStack}`;
+            const maxTextWidth = Math.max(w - 28, 20);
+            const text = node.innerText.trim();
+            const lines = getWrappedLines(ctx, text, maxTextWidth);
+
+            const lineHeight = Math.round(fontSize * 1.35);
+            const totalH = lines.length * lineHeight;
+            const startY = y + (h - totalH) / 2 + lineHeight / 2;
+
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(node.innerText.trim(), x + w / 2, y + h / 2);
+            lines.forEach((line, idx) => {
+                ctx.fillText(line, x + w / 2, startY + idx * lineHeight);
+            });
         } else if (node.classList.contains('tree-node-sub')) {
-            ctx.font = 'bold 15px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+            // 第3層（中項目）
+            const fontSize = 14;
+            ctx.font = `bold ${fontSize}px ${fontStack}`;
+            const maxTextWidth = Math.max(w - 24, 20);
+            const text = node.innerText.trim();
+            const lines = getWrappedLines(ctx, text, maxTextWidth);
+
+            const lineHeight = Math.round(fontSize * 1.35);
+            const totalH = lines.length * lineHeight;
+            const startY = y + (h - totalH) / 2 + lineHeight / 2;
+
             ctx.textAlign = 'center';
             ctx.textBaseline = 'middle';
-            ctx.fillText(node.innerText.trim(), x + w / 2, y + h / 2);
+            lines.forEach((line, idx) => {
+                ctx.fillText(line, x + w / 2, startY + idx * lineHeight);
+            });
         } else if (node.classList.contains('tree-node-leaf')) {
-            ctx.font = '14px -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif';
+            // 第4層（箇条書き詳細項目リスト）
+            const fontSize = 13;
+            ctx.font = `${fontSize}px ${fontStack}`;
             ctx.textAlign = 'left';
             ctx.textBaseline = 'top';
 
             const items = node.querySelectorAll<HTMLElement>('.tree-leaf-item');
-            const lineHeight = 22;
-            let currentY = y + 12;
+            const paddingLeft = 14;
+            const bulletWidth = 14;
+            const paddingRight = 14;
+            const maxTextWidth = Math.max(w - paddingLeft - bulletWidth - paddingRight, 20);
+            const lineHeight = 19;
 
             items.forEach(item => {
-                const text = item.innerText.trim();
-                // 中黒付きで描画
-                ctx.fillText(`・${text}`, x + 12, currentY);
-                currentY += lineHeight;
+                let text = item.innerText.trim();
+                if (text.startsWith('・')) {
+                    text = text.substring(1).trim();
+                }
+
+                // DOM 上の正確な Y 座標を取得
+                const itemR = item.getBoundingClientRect();
+                const itemY = itemR.top - wrapperRect.top;
+
+                // 中黒（・）の描画
+                ctx.fillText('・', x + paddingLeft, itemY);
+
+                // テキストの折り返し描画（2行目以降もインデントを揃える）
+                const lines = getWrappedLines(ctx, text, maxTextWidth);
+                const textX = x + paddingLeft + bulletWidth;
+
+                lines.forEach((line, lineIdx) => {
+                    ctx.fillText(line, textX, itemY + lineIdx * lineHeight);
+                });
             });
         }
     });
@@ -346,6 +463,16 @@ export function initTreeDiagramOutput(): void {
 
         container.innerHTML = renderTreeHtml(currentData);
 
+        const isDataEmpty = !currentData.title && currentData.categories.length === 0;
+        const exportBtn = document.getElementById('export-png-btn') as HTMLButtonElement | null;
+        const printBtn = document.getElementById('print-btn') as HTMLButtonElement | null;
+
+        if (isDataEmpty) {
+            if (exportBtn) exportBtn.disabled = true;
+            if (printBtn) printBtn.disabled = true;
+            return;
+        }
+
         // レイアウト確定後にSVG接続線を描画
         requestAnimationFrame(() => {
             drawConnections();
@@ -365,8 +492,8 @@ export function initTreeDiagramOutput(): void {
         window.addEventListener('load', drawConnections);
 
         // 操作ボタンのバインド
-        document.getElementById('export-png-btn')?.addEventListener('click', exportToPng);
-        document.getElementById('print-btn')?.addEventListener('click', () => window.print());
+        exportBtn?.addEventListener('click', exportToPng);
+        printBtn?.addEventListener('click', () => window.print());
     } catch (error) {
         console.error('展開図の描画に失敗しました:', error);
         const container = document.getElementById('diagram-container');
