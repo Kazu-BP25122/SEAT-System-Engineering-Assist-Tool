@@ -1,0 +1,24 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import '../../../styles/style.css';
+import '../../../styles/needsList.css';
+---
+
+<BaseLayout title="ニーズリスト">
+    <div class="container">
+        <header>
+            <h1>ニーズリスト</h1>
+            <a class="btn btn-secondary" href="/tools/needsList/">← 編集に戻る</a>
+        </header>
+
+        <div class="card">
+            <div id="table-container">データを読み込み中...</div>
+        </div>
+    </div>
+</BaseLayout>
+
+<script>
+    import { initNeedsListOutput } from '../../../scripts/needsList/output';
+
+    initNeedsListOutput();
+</script>

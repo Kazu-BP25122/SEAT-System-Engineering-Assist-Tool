@@ -1,6 +1,7 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
 import '../../../styles/style.css';
+import '../../../styles/needsList.css';
 ---
 
 <BaseLayout title="ニーズリスト">
@@ -27,7 +28,7 @@ import '../../../styles/style.css';
 
         <div class="footer-bar">
             <div>
-                <span id="data-status" style="font-size: 0.85rem; color: #718096;">変更内容は自動保存されています</span>
+                <span id="data-status" class="status-text">変更内容は自動保存されています</span>
             </div>
             <button class="btn btn-success" id="save-navigate-btn">確定して表（出力画面）を出力 →</button>
         </div>
@@ -35,7 +36,7 @@ import '../../../styles/style.css';
 </BaseLayout>
 
 <script>
-    import { initNeedsList } from '../../../scripts/needsList';
+    import { initNeedsList } from '../../../scripts/needsList/input';
 
     initNeedsList();
 </script>

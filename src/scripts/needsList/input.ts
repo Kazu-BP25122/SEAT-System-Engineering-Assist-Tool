@@ -1,14 +1,13 @@
 // ニーズリスト作成画面のロジック
 
-type NeedItems = string[];
-type SubCategories = Record<string, NeedItems>;
-type NeedsData = Record<string, NeedItems | SubCategories>;
+import { escapeHtml } from '../utils';
+import { loadNeedsData, saveNeedsData } from './data';
+import type { NeedItems, NeedsData, SubCategories } from './data';
 
 /** [ステークホルダ] または [ステークホルダ, サブカテゴリ] */
 type NeedPath = [string] | [string, string];
 
-const STORAGE_KEY = 'seat_needs_data';
-const OUTPUT_PAGE = 'output.html';
+const OUTPUT_PAGE = '/tools/needsList/output';
 
 const defaultData: NeedsData = {
     // 必要に応じて初期データを設定してください
@@ -22,18 +21,8 @@ function cloneDefaultData(): NeedsData {
     return structuredClone(defaultData);
 }
 
-function loadData(): NeedsData {
-    const saved = localStorage.getItem(STORAGE_KEY);
-    if (!saved) return cloneDefaultData();
-    try {
-        return JSON.parse(saved);
-    } catch {
-        return cloneDefaultData();
-    }
-}
-
 function persist(): void {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(needsData));
+    saveNeedsData(needsData);
 }
 
 /** 保存して再描画する */
@@ -54,14 +43,6 @@ function getItems([topKey, subKey]: NeedPath): NeedItems | undefined {
 
 // ---------- 描画 ----------
 
-function escapeHtml(str: unknown): string {
-    return String(str)
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-}
-
 /** パスを data 属性の文字列に変換する */
 function pathAttrs([topKey, subKey]: NeedPath): string {
     const top = `data-top="${escapeHtml(topKey)}"`;
@@ -70,7 +51,7 @@ function pathAttrs([topKey, subKey]: NeedPath): string {
 
 function renderItemsList(items: NeedItems, path: NeedPath): string {
     if (items.length === 0) {
-        return '<p style="font-size: 0.8rem; color: #a0aec0; margin: 4px 0;">(ニーズ項目なし)</p>';
+        return '<p class="empty-items">(ニーズ項目なし)</p>';
     }
     const rows = items.map((item, idx) => `
         <li>
@@ -85,7 +66,7 @@ function renderAddNeedForm(path: NeedPath): string {
     return `
         <div class="add-inline-form">
             <input type="text" class="input-flex" placeholder="＋ ニーズを追加" data-enter="add-need" ${pathAttrs(path)}>
-            <button class="btn btn-secondary" style="font-size: 0.8rem;" data-action="add-need" ${pathAttrs(path)}>追加</button>
+            <button class="btn btn-secondary btn-inline" data-action="add-need" ${pathAttrs(path)}>追加</button>
         </div>
     `;
 }
@@ -107,10 +88,10 @@ function renderSubCategory(topKey: string, subKey: string, items: NeedItems): st
 function renderAddSubForm(topKey: string): string {
     const attrs = pathAttrs([topKey]);
     return `
-        <div style="padding: 10px 15px; background-color: #faf5ff; border-top: 1px dashed #d6bcfa;">
+        <div class="add-sub-area">
             <div class="add-inline-form">
                 <input type="text" class="input-flex" placeholder="＋ サブカテゴリを追加 (例: 若年層, VIP)" data-enter="add-sub" ${attrs}>
-                <button class="btn btn-primary" style="font-size: 0.8rem;" data-action="add-sub" ${attrs}>追加</button>
+                <button class="btn btn-primary btn-inline" data-action="add-sub" ${attrs}>追加</button>
             </div>
         </div>
     `;
@@ -123,7 +104,7 @@ function renderTopCategory(topKey: string, val: NeedItems | SubCategories): stri
     let body = '';
     if (isArray) {
         body = `
-            <div style="padding: 10px 15px;">
+            <div class="top-items-area">
                 ${renderItemsList(val, [topKey])}
                 ${renderAddNeedForm([topKey])}
             </div>
@@ -139,7 +120,7 @@ function renderTopCategory(topKey: string, val: NeedItems | SubCategories): stri
             <div class="top-category-header">
                 <span> ${escapeHtml(topKey)}</span>
                 <div>
-                    ${isArray ? `<button class="btn btn-secondary" style="font-size: 0.75rem; padding: 3px 8px; margin-right: 5px;" data-action="convert-to-group" ${attrs}>サブカテゴリを追加</button>` : ''}
+                    ${isArray ? `<button class="btn btn-secondary btn-convert" data-action="convert-to-group" ${attrs}>サブカテゴリを追加</button>` : ''}
                     <button class="btn btn-danger" data-action="delete-top" ${attrs}>削除</button>
                 </div>
             </div>
@@ -154,7 +135,7 @@ function renderTree(): void {
 
     const entries = Object.entries(needsData);
     if (entries.length === 0) {
-        root.innerHTML = '<p style="color: #a0aec0; text-align: center; padding: 20px;">ステークホルダが登録されていません。上のフォームから追加してください。</p>';
+        root.innerHTML = '<p class="empty-tree">ステークホルダが登録されていません。上のフォームから追加してください。</p>';
         return;
     }
     root.innerHTML = entries.map(([topKey, val]) => renderTopCategory(topKey, val)).join('');
@@ -306,7 +287,7 @@ function bindEvents(): void {
 }
 
 export function initNeedsList(): void {
-    needsData = loadData();
+    needsData = loadNeedsData(defaultData);
     bindEvents();
     renderTree();
 }

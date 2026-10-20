@@ -1,0 +1,123 @@
+/* ニーズリスト専用のスタイル */
+
+/* ---------- 入力ページ ---------- */
+
+.tree-container {
+    margin-top: 10px;
+}
+
+.top-category-block {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    overflow: hidden;
+    background-color: #fff;
+}
+
+.top-category-header {
+    background-color: #edf2f7;
+    padding: 12px 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-weight: bold;
+    font-size: 1rem;
+    color: #2d3748;
+}
+
+.sub-category-block {
+    margin: 10px 15px 10px 25px;
+    border-left: 3px solid #cbd5e0;
+    padding-left: 12px;
+}
+
+.sub-category-header {
+    font-weight: bold;
+    font-size: 0.95rem;
+    color: #4a5568;
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.items-list {
+    list-style: none;
+    padding-left: 0;
+    margin: 5px 0 10px 0;
+}
+
+.items-list li {
+    padding: 6px 10px;
+    background-color: #f7fafc;
+    border: 1px solid #edf2f7;
+    border-radius: 4px;
+    margin-bottom: 4px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    font-size: 0.88rem;
+}
+
+.add-inline-form {
+    display: flex;
+    gap: 8px;
+    margin-top: 6px;
+}
+
+.top-items-area {
+    padding: 10px 15px;
+}
+
+.add-sub-area {
+    padding: 10px 15px;
+    background-color: #faf5ff;
+    border-top: 1px dashed #d6bcfa;
+}
+
+.btn-inline {
+    font-size: 0.8rem;
+}
+
+.btn-convert {
+    font-size: 0.75rem;
+    padding: 3px 8px;
+    margin-right: 5px;
+}
+
+.empty-items {
+    font-size: 0.8rem;
+    color: #a0aec0;
+    margin: 4px 0;
+}
+
+.empty-tree {
+    color: #a0aec0;
+    text-align: center;
+    padding: 20px;
+}
+
+.status-text {
+    font-size: 0.85rem;
+    color: #718096;
+}
+
+/* ---------- 出力ページ ---------- */
+
+.needs-table {
+    border-collapse: collapse;
+    width: 100%;
+    background-color: #ffffff;
+}
+
+.needs-table th,
+.needs-table td {
+    border: 2px solid #000;
+    padding: 10px;
+    text-align: center;
+}
+
+.needs-table th {
+    background-color: #f4f4f4;
+    font-weight: bold;
+}
