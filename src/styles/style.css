@@ -15,6 +15,13 @@ body {
     margin: 0 auto;
 }
 
+/* 入力と図を左右に並べるページ用に、PC では幅を広げる */
+@media (min-width: 1024px) {
+    .container-wide {
+        max-width: 1400px;
+    }
+}
+
 header {
     background: #ffffff;
     padding: 20px 25px;
@@ -24,6 +31,11 @@ header {
     display: flex;
     justify-content: space-between;
     align-items: center;
+}
+
+/* 狭い画面でヘッダーのボタンが縦に潰れないようにする */
+header .btn {
+    white-space: nowrap;
 }
 
 h1 {
@@ -140,6 +152,8 @@ select:focus {
     border-radius: 10px;
     box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
     justify-content: space-between;
     align-items: center;
     border: 1px solid #e2e8f0;

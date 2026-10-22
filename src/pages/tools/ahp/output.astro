@@ -1,0 +1,27 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import DiagramPanel from '../../../components/DiagramPanel.astro';
+import '../../../styles/style.css';
+---
+
+<BaseLayout title="AHP階層図">
+    <div class="container container-wide">
+        <header>
+            <div>
+                <h1>AHP階層図</h1>
+                <div class="subtitle">総合目的 → 評価基準 → 代替案</div>
+            </div>
+            <a class="btn btn-secondary" href="/tools/ahp/">← 編集に戻る</a>
+        </header>
+
+        <div class="card">
+            <DiagramPanel id="ahp-output" showCode />
+        </div>
+    </div>
+</BaseLayout>
+
+<script>
+    import { initAhpOutput } from '../../../scripts/ahp/output';
+
+    initAhpOutput();
+</script>
