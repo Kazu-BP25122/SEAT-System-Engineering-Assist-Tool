@@ -9,21 +9,29 @@ interface Props {
     codeName?: string;
     /** 図の下にコードを表示する */
     showCode?: boolean;
+    /** 向きの切り替えボタンを表示する（グラフなど向きの無い図では false） */
+    orientable?: boolean;
+    /** コードのコピーボタンを表示する（コードを持たない図では false） */
+    copyable?: boolean;
 }
 
-const { id, codeName = 'Mermaid', showCode = false } = Astro.props;
+const { id, codeName = 'Mermaid', showCode = false, orientable = true, copyable = true } = Astro.props;
 ---
 
 <div class="diagram-panel" id={id}>
     <div class="diagram-toolbar">
-        <div class="diagram-orientation" role="group" aria-label="図の向き">
-            <button type="button" class="diagram-orientation-btn" data-diagram-orientation="vertical">縦向き</button>
-            <button type="button" class="diagram-orientation-btn" data-diagram-orientation="horizontal">横向き</button>
-        </div>
+        {orientable ? (
+            <div class="diagram-orientation" role="group" aria-label="図の向き">
+                <button type="button" class="diagram-orientation-btn" data-diagram-orientation="vertical">縦向き</button>
+                <button type="button" class="diagram-orientation-btn" data-diagram-orientation="horizontal">横向き</button>
+            </div>
+        ) : <div />}
         <div class="diagram-actions">
             <button type="button" class="btn btn-secondary" data-diagram-action="download-svg">SVG で保存</button>
             <button type="button" class="btn btn-secondary" data-diagram-action="download-png">PNG で保存</button>
-            <button type="button" class="btn btn-secondary" data-diagram-action="copy-code">{codeName} コードをコピー</button>
+            {copyable && (
+                <button type="button" class="btn btn-secondary" data-diagram-action="copy-code">{codeName} コードをコピー</button>
+            )}
         </div>
     </div>
     <div class="diagram-canvas" data-diagram-canvas>図を生成中...</div>

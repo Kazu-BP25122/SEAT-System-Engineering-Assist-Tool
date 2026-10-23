@@ -1,0 +1,40 @@
+---
+// AHP の感度分析（評価基準のウエイトを動かしたときの総合評価の折れ線グラフ）の表示領域。
+// 描画はクライアント側で mountSensitivity(要素) が返す関数にデータを渡して行う。
+import DiagramPanel from './DiagramPanel.astro';
+import '../styles/ahpCalc.css';
+
+interface Props {
+    id: string;
+}
+
+const { id } = Astro.props;
+---
+
+<div class="ahp-sens" id={id}>
+    <p class="ahp-calc-empty" data-sens-message></p>
+
+    <div data-sens-body>
+        <div class="ahp-sens-controls">
+            <label class="ahp-sens-field">
+                <span>ウエイトを動かす評価基準</span>
+                <select data-sens-criterion></select>
+            </label>
+            <label class="ahp-sens-check">
+                <input type="checkbox" data-sens-fit>
+                縦軸を結果の範囲に合わせて拡大
+            </label>
+        </div>
+        <DiagramPanel id={`${id}-chart`} orientable={false} copyable={false} />
+        <div class="ahp-sens-slider">
+            <label>
+                <span>読み取るウエイト w = <output data-sens-cursor-value>0.00</output></span>
+                <input type="range" min="0" max="1" step="0.01" data-sens-cursor>
+            </label>
+            <button type="button" class="btn btn-secondary" data-sens-reset>現在のウエイトに戻す</button>
+        </div>
+        <p class="ahp-calc-hint">グラフにポインタを乗せるとその位置の値を読み取れます。クリックするとその位置に固定します。</p>
+        <div class="ahp-sens-readout" data-sens-readout></div>
+        <div data-sens-summary></div>
+    </div>
+</div>

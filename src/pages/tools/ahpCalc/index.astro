@@ -1,0 +1,97 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Workspace from '../../../components/Workspace.astro';
+import AhpSensitivity from '../../../components/AhpSensitivity.astro';
+import '../../../styles/style.css';
+import '../../../styles/ahpCalc.css';
+---
+
+<BaseLayout title="AHP 一対比較・重要度計算">
+    <div class="container container-wide">
+        <header>
+            <div>
+                <h1>AHP 一対比較・重要度計算</h1>
+                <div class="subtitle">一対比較から幾何平均法でウエイト・整合度（C.I.）・総合評価を計算します（グループ意思決定・感度分析に対応）</div>
+            </div>
+            <div>
+                <button class="btn btn-secondary" id="reset-btn">初期化</button>
+            </div>
+        </header>
+
+        <Workspace previewLabel="計算結果">
+            <Fragment slot="editor">
+                <div class="card">
+                    <div class="card-title">総合目的</div>
+                    <input type="text" id="goal-input" class="ahp-calc-goal-input" placeholder="例: 文化祭の模擬店で出すメニューを決める">
+                    <button class="btn btn-secondary ahp-calc-import-btn" id="import-ahp-btn">AHP階層図から読み込む</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">評価基準</div>
+                    <div class="form-row">
+                        <input type="text" id="new-criteria-input" class="input-flex" placeholder="例: 味, 提供の速さ, 利益">
+                        <button class="btn btn-primary" id="add-criteria-btn">追加</button>
+                    </div>
+                    <div id="criteria-root">データを読み込み中...</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">代替案</div>
+                    <div class="form-row">
+                        <input type="text" id="new-alternatives-input" class="input-flex" placeholder="例: ポップコーン, スムージー">
+                        <button class="btn btn-primary" id="add-alternatives-btn">追加</button>
+                    </div>
+                    <div id="alternatives-root">データを読み込み中...</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">回答するメンバー</div>
+                    <p class="ahp-calc-hint">2 人以上にすると、メンバーごとに一対比較を入力し、全員の値の幾何平均で統合した表から計算します（グループ意思決定）。</p>
+                    <div id="members-root">データを読み込み中...</div>
+                    <button class="btn btn-secondary ahp-calc-add-member" id="add-member-btn">＋ メンバーを追加</button>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">① 評価基準どうしの一対比較</div>
+                    <p class="ahp-calc-hint">行の評価基準が列の評価基準に比べてどれだけ重要かを選びます。下半分は自動で逆数になります。</p>
+                    <details class="ahp-calc-scale">
+                        <summary>値の意味</summary>
+                        <dl id="scale-legend"></dl>
+                    </details>
+                    <div id="criteria-matrix-root" data-matrix-root>データを読み込み中...</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">② 各評価基準における代替案どうしの一対比較</div>
+                    <div id="alternative-matrix-root" data-matrix-root>データを読み込み中...</div>
+                </div>
+            </Fragment>
+
+            <Fragment slot="preview">
+                <div class="ahp-calc-results">
+                    <div class="card">
+                        <div class="card-title">感度分析</div>
+                        <AhpSensitivity id="ahp-calc-sensitivity" />
+                    </div>
+                    <div class="card">
+                        <div class="card-title">計算結果</div>
+                        <div id="ahp-calc-report">計算中...</div>
+                    </div>
+                </div>
+            </Fragment>
+        </Workspace>
+
+        <div class="footer-bar">
+            <div>
+                <span id="data-status" class="status-text">変更内容は自動保存されています</span>
+            </div>
+            <button class="btn btn-success" id="save-navigate-btn">計算結果（出力画面）を表示 →</button>
+        </div>
+    </div>
+</BaseLayout>
+
+<script>
+    import { initAhpCalcInput } from '../../../scripts/ahpCalc/input';
+
+    initAhpCalcInput();
+</script>

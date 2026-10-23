@@ -12,7 +12,7 @@ import '../../../styles/ahp.css';
         <header>
             <div>
                 <h1>AHP階層図 作成</h1>
-                <div class="subtitle">総合目的・評価基準（ステークホルダ / ニーズ）・代替案から階層図を作成します</div>
+                <div class="subtitle">総合目的・評価基準（3 層）または大基準・中基準（4 層）・代替案から階層図を作成します</div>
             </div>
             <div>
                 <button class="btn btn-secondary" id="reset-btn">初期化</button>
@@ -27,19 +27,21 @@ import '../../../styles/ahp.css';
                 </div>
 
                 <div class="card">
-                    <div class="card-title">ステークホルダとニーズ（評価基準）</div>
+                    <div class="card-title">階層の数</div>
+                    <div class="ahp-mode" role="radiogroup" aria-label="階層の数">
+                        <label><input type="radio" name="hierarchy-levels" value="3"> 3 層（総合目的 → 評価基準 → 代替案）</label>
+                        <label><input type="radio" name="hierarchy-levels" value="4"> 4 層（総合目的 → 大基準 → 中基準 → 代替案）</label>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title" id="criteria-title">評価基準</div>
                     <div class="form-row">
-                        <input type="text" id="new-stakeholder-input" class="input-flex" placeholder="例: 運営スタッフ, スポンサー, 来場者">
-                        <button class="btn btn-primary" id="add-stakeholder-btn">追加</button>
+                        <input type="text" id="new-criterion-input" class="input-flex" placeholder="例: 味, 提供の速さ, 利益">
+                        <button class="btn btn-primary" id="add-criterion-btn">追加</button>
                     </div>
                     <button class="btn btn-secondary ahp-import-btn" id="import-needs-btn">ニーズリストから読み込む</button>
-                    <div id="stakeholder-root" class="tree-container">データを読み込み中...</div>
-
-                    <div class="ahp-mode">
-                        <span class="ahp-mode-title">評価基準として並べる項目:</span>
-                        <label><input type="radio" name="criteria-mode" value="stakeholder"> ステークホルダ</label>
-                        <label><input type="radio" name="criteria-mode" value="need"> ニーズ項目</label>
-                    </div>
+                    <div id="criteria-root" class="tree-container">データを読み込み中...</div>
                 </div>
 
                 <div class="card">

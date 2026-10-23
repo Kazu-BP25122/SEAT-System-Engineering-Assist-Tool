@@ -1,4 +1,4 @@
-/* AHP階層図専用のスタイル（ステークホルダ・ニーズの一覧は needsList.css のクラスを流用） */
+/* AHP階層図専用のスタイル（大基準・中基準の一覧は needsList.css のクラスを流用） */
 
 .ahp-goal-input {
     width: 100%;
@@ -12,23 +12,43 @@
 
 .ahp-mode {
     display: flex;
-    flex-wrap: wrap;
-    gap: 8px 16px;
-    align-items: center;
-    margin-top: 10px;
-    padding-top: 12px;
-    border-top: 1px dashed #e2e8f0;
+    flex-direction: column;
+    gap: 8px;
     font-size: 0.9rem;
-}
-
-.ahp-mode-title {
-    font-weight: bold;
-    color: #4a5568;
 }
 
 .ahp-mode label {
     display: flex;
-    gap: 4px;
+    gap: 6px;
     align-items: center;
     cursor: pointer;
+}
+
+/* 一覧の中で名前を直接書き換える入力欄 */
+.ahp-name-input {
+    min-width: 0;
+    margin-right: 8px;
+    padding: 4px 8px;
+}
+
+.top-category-header .ahp-name-input {
+    font-weight: bold;
+    background-color: #ffffff;
+}
+
+.items-list .ahp-name-input {
+    border-color: transparent;
+    background-color: transparent;
+}
+
+.items-list .ahp-name-input:hover {
+    border-color: #cbd5e0;
+}
+
+.ahp-hidden-subs {
+    margin-right: 8px;
+    font-size: 0.75rem;
+    font-weight: normal;
+    color: #718096;
+    white-space: nowrap;
 }
