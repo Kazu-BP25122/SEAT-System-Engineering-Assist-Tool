@@ -1,8 +1,7 @@
 // DiagramPanel コンポーネントのクライアント処理（描画・向きの切り替え・保存・コピー）
 
+import { downloadPng, downloadSvg } from './export';
 import type { Orientation, RenderedSvg } from './svg';
-
-const PNG_SCALE = 2;
 
 /** パネルに表示する図の中身。向きを受け取って SVG とコードを返す */
 export interface DiagramContent {
@@ -18,39 +17,6 @@ export interface DiagramPanelOptions {
 }
 
 // ---------- 保存・コピー ----------
-
-function downloadBlob(blob: Blob, filename: string): void {
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = filename;
-    a.click();
-    URL.revokeObjectURL(url);
-}
-
-function downloadSvg(svg: RenderedSvg, filename: string): void {
-    const xml = `<?xml version="1.0" encoding="UTF-8"?>\n${svg.markup}`;
-    downloadBlob(new Blob([xml], { type: 'image/svg+xml;charset=utf-8' }), `${filename}.svg`);
-}
-
-function downloadPng(svg: RenderedSvg, filename: string): void {
-    const img = new Image();
-    img.onload = () => {
-        const canvas = document.createElement('canvas');
-        canvas.width = svg.width * PNG_SCALE;
-        canvas.height = svg.height * PNG_SCALE;
-        const ctx = canvas.getContext('2d');
-        if (!ctx) return;
-        ctx.fillStyle = '#fff';
-        ctx.fillRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-        canvas.toBlob(blob => {
-            if (blob) downloadBlob(blob, `${filename}.png`);
-        }, 'image/png');
-    };
-    img.onerror = () => alert('PNG への変換に失敗しました。');
-    img.src = `data:image/svg+xml;charset=utf-8,${encodeURIComponent(svg.markup)}`;
-}
 
 async function copyText(text: string): Promise<void> {
     if (navigator.clipboard?.writeText) {

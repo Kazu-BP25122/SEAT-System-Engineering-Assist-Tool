@@ -2,19 +2,21 @@
 
 import type { Orientation } from '../diagram/svg';
 
-/** 評価基準として並べる対象（ステークホルダ単位 / ニーズ項目単位） */
-export type CriteriaMode = 'stakeholder' | 'need';
+/** 階層の数（3: 総合目的→評価基準→代替案 / 4: 総合目的→大基準→中基準→代替案） */
+export type HierarchyLevels = 3 | 4;
 
-export interface Stakeholder {
+/** 評価基準（4 層のときは大基準とその下の中基準） */
+export interface CriterionGroup {
     name: string;
-    needs: string[];
+    /** 中基準。3 層のときは図に使わない（切り替えても消えないように残しておく） */
+    subcriteria: string[];
 }
 
 export interface AhpData {
     goal: string;
-    criteriaMode: CriteriaMode;
     orientation: Orientation;
-    stakeholders: Stakeholder[];
+    levels: HierarchyLevels;
+    criteria: CriterionGroup[];
     alternatives: string[];
 }
 
@@ -23,42 +25,79 @@ export const STORAGE_KEY = 'seat_ahp_data';
 // デフォルトの空データ
 export const DEFAULT_AHP_DATA: AhpData = {
     goal: '',
-    criteriaMode: 'stakeholder',
     orientation: 'vertical',
-    stakeholders: [],
+    levels: 3,
+    criteria: [],
     alternatives: [],
 };
 
 // localStorage にデータが無い場合の表示用サンプルデータ
 export const SAMPLE_AHP_DATA: AhpData = {
     goal: '文化祭の模擬店で出すメニューを決める',
-    criteriaMode: 'stakeholder',
     orientation: 'vertical',
-    stakeholders: [
-        { name: '来場者', needs: ['美味しい物を食べたい', '列に並びたくない'] },
-        { name: '運営スタッフ', needs: ['調理が簡単であってほしい', '利益を出したい'] },
-        { name: 'スポンサー', needs: ['ブランドを宣伝したい'] },
+    levels: 4,
+    criteria: [
+        { name: '来場者', subcriteria: ['味', '提供の速さ'] },
+        { name: '運営スタッフ', subcriteria: ['調理の手間', '利益'] },
     ],
     alternatives: ['ポップコーン', 'スムージー', 'たこ焼き'],
 };
+
+/**
+ * 代替案の直前の段に並ぶ評価基準（末端の基準）。
+ * 4 層で中基準の無い大基準は、その大基準自体を末端として扱う。
+ * 別の大基準に同じ名前の中基準があるときは「中基準（大基準）」と区別する。
+ */
+export function leafCriteria(data: AhpData): string[] {
+    if (data.levels === 3) return data.criteria.map(c => c.name);
+
+    const leaves = data.criteria.flatMap(c => (c.subcriteria.length > 0
+        ? c.subcriteria.map(sub => ({ name: sub, parent: c.name }))
+        : [{ name: c.name, parent: '' }]));
+    return leaves.map(leaf => {
+        const duplicated = leaves.filter(other => other.name === leaf.name).length > 1;
+        return duplicated && leaf.parent ? `${leaf.name}（${leaf.parent}）` : leaf.name;
+    });
+}
 
 /** 文字列の配列だけを取り出す（壊れたデータ対策） */
 function toStringArray(value: unknown): string[] {
     return Array.isArray(value) ? value.filter((v): v is string => typeof v === 'string') : [];
 }
 
+/** 評価基準を CriterionGroup の形に揃える。文字列だけの配列（以前の 3 層の形式）も受け付ける */
+function toCriterionGroups(value: unknown, subKey: string): CriterionGroup[] {
+    if (!Array.isArray(value)) return [];
+    return value.flatMap((item): CriterionGroup[] => {
+        if (typeof item === 'string') return [{ name: item, subcriteria: [] }];
+        if (typeof item === 'object' && item !== null && typeof item.name === 'string') {
+            return [{ name: item.name, subcriteria: toStringArray((item as Record<string, unknown>)[subKey]) }];
+        }
+        return [];
+    });
+}
+
 /** 読み込んだ値を AhpData の形に揃える */
 function normalize(raw: unknown): AhpData {
     const obj = (typeof raw === 'object' && raw !== null ? raw : {}) as Record<string, unknown>;
-    const stakeholders = Array.isArray(obj.stakeholders) ? obj.stakeholders : [];
-    return {
+    const base = {
         goal: typeof obj.goal === 'string' ? obj.goal : '',
-        criteriaMode: obj.criteriaMode === 'need' ? 'need' : 'stakeholder',
         orientation: obj.orientation === 'horizontal' ? 'horizontal' : 'vertical',
-        stakeholders: stakeholders
-            .filter((s): s is Record<string, unknown> => typeof s === 'object' && s !== null && typeof s.name === 'string')
-            .map(s => ({ name: s.name as string, needs: toStringArray(s.needs) })),
         alternatives: toStringArray(obj.alternatives),
+    } as const;
+
+    // 以前の形式（ステークホルダとニーズ）は、大基準と中基準として読み込む
+    if (Array.isArray(obj.stakeholders)) {
+        return {
+            ...base,
+            levels: obj.criteriaMode === 'need' ? 4 : 3,
+            criteria: toCriterionGroups(obj.stakeholders, 'needs'),
+        };
+    }
+    return {
+        ...base,
+        levels: obj.levels === 4 ? 4 : 3,
+        criteria: toCriterionGroups(obj.criteria, 'subcriteria'),
     };
 }
 
@@ -75,12 +114,4 @@ export function loadAhpData(fallback: AhpData = DEFAULT_AHP_DATA): AhpData {
 
 export function saveAhpData(data: AhpData): void {
     localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
-}
-
-/** 階層図の中段（評価基準）に並べるラベルの一覧 */
-export function getCriteria(data: AhpData): string[] {
-    if (data.criteriaMode === 'need') {
-        return data.stakeholders.flatMap(s => s.needs);
-    }
-    return data.stakeholders.map(s => s.name);
 }

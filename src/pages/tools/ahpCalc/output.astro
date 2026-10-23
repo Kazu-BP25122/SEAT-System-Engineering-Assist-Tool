@@ -1,0 +1,33 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import AhpSensitivity from '../../../components/AhpSensitivity.astro';
+import '../../../styles/style.css';
+import '../../../styles/ahpCalc.css';
+---
+
+<BaseLayout title="AHP 一対比較・重要度計算">
+    <div class="container">
+        <header>
+            <div>
+                <h1>AHP 計算結果</h1>
+                <div class="subtitle">ウエイト・整合度（C.I.）・総合評価・感度分析</div>
+            </div>
+            <a class="btn btn-secondary" href="/tools/ahpCalc/">← 編集に戻る</a>
+        </header>
+
+        <div class="card">
+            <div class="card-title">感度分析</div>
+            <AhpSensitivity id="ahp-calc-sensitivity" />
+        </div>
+
+        <div class="card">
+            <div id="ahp-calc-output">計算中...</div>
+        </div>
+    </div>
+</BaseLayout>
+
+<script>
+    import { initAhpCalcOutput } from '../../../scripts/ahpCalc/output';
+
+    initAhpCalcOutput();
+</script>

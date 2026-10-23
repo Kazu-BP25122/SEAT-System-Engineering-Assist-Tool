@@ -3,12 +3,19 @@
 // PC（幅 1024px 以上）では左右 2 列、スマホではタブで「入力」と「図」を切り替える。
 // 使い方: <Workspace><Fragment slot="editor">…</Fragment><Fragment slot="preview">…</Fragment></Workspace>
 import '../styles/workspace.css';
+
+interface Props {
+    /** スマホ表示時のプレビュー側のタブ名 */
+    previewLabel?: string;
+}
+
+const { previewLabel = '図' } = Astro.props;
 ---
 
 <div class="workspace" data-workspace data-view="editor">
     <div class="workspace-tabs" role="tablist">
         <button type="button" class="workspace-tab is-active" role="tab" aria-selected="true" data-workspace-tab="editor">入力</button>
-        <button type="button" class="workspace-tab" role="tab" aria-selected="false" data-workspace-tab="preview">図</button>
+        <button type="button" class="workspace-tab" role="tab" aria-selected="false" data-workspace-tab="preview">{previewLabel}</button>
     </div>
     <div class="workspace-editor">
         <slot name="editor" />

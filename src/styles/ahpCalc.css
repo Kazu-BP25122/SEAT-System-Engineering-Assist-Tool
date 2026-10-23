@@ -1,0 +1,656 @@
+/* AHP 一対比較・重要度計算ツール専用のスタイル */
+
+.status-text {
+    font-size: 0.85rem;
+    color: #718096;
+}
+
+.ahp-calc-goal-input {
+    width: 100%;
+}
+
+.ahp-calc-import-btn {
+    margin-top: 10px;
+    padding: 6px 12px;
+    font-size: 0.8rem;
+}
+
+.ahp-calc-empty {
+    margin: 6px 0;
+    font-size: 0.85rem;
+    color: #a0aec0;
+}
+
+.ahp-calc-hint {
+    margin: 0 0 10px;
+    font-size: 0.85rem;
+    color: #718096;
+}
+
+/* ---------- 評価基準・代替案の一覧 ---------- */
+
+.ahp-calc-items {
+    margin: 0;
+    padding-left: 1.6em;
+}
+
+.ahp-calc-items li {
+    margin-bottom: 6px;
+}
+
+.ahp-calc-items li > * {
+    vertical-align: middle;
+}
+
+.ahp-calc-items li input {
+    width: calc(100% - 50px);
+    margin-right: 6px;
+}
+
+/* ---------- 値の意味（凡例） ---------- */
+
+.ahp-calc-scale {
+    margin-bottom: 12px;
+    font-size: 0.85rem;
+    color: #4a5568;
+}
+
+.ahp-calc-scale summary {
+    cursor: pointer;
+    font-weight: bold;
+}
+
+.ahp-calc-scale dl {
+    display: grid;
+    grid-template-columns: max-content 1fr;
+    gap: 2px 12px;
+    margin: 8px 0 0;
+    padding: 8px 12px;
+    background-color: #f7fafc;
+    border-radius: 6px;
+}
+
+.ahp-calc-scale dt {
+    font-weight: bold;
+    text-align: right;
+}
+
+.ahp-calc-scale dd {
+    margin: 0;
+}
+
+/* ---------- 一対比較の入力表 ---------- */
+
+.ahp-calc-matrix-scroll {
+    overflow-x: auto;
+}
+
+.ahp-calc-matrix {
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.ahp-calc-matrix th,
+.ahp-calc-matrix td {
+    padding: 4px 6px;
+    border: 1px solid #e2e8f0;
+    text-align: center;
+}
+
+.ahp-calc-matrix th {
+    max-width: 8em;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    background-color: #f7fafc;
+    color: #2d3748;
+}
+
+.ahp-calc-matrix .ahp-calc-corner {
+    font-weight: normal;
+    font-size: 0.75rem;
+    color: #a0aec0;
+}
+
+.ahp-calc-matrix .is-diagonal {
+    background-color: #edf2f7;
+    color: #718096;
+}
+
+.ahp-calc-matrix .is-reciprocal {
+    color: #a0aec0;
+}
+
+.ahp-calc-select {
+    padding: 4px 6px;
+    min-width: 4.5em;
+}
+
+/* ---------- 評価基準ごとのタブ ---------- */
+
+.ahp-calc-tabs {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    margin-bottom: 12px;
+}
+
+.ahp-calc-tab {
+    padding: 6px 12px;
+    border: 1px solid #cbd5e0;
+    border-radius: 999px;
+    background-color: #ffffff;
+    color: #4a5568;
+    font-size: 0.85rem;
+    cursor: pointer;
+}
+
+.ahp-calc-tab.is-active {
+    border-color: #3182ce;
+    background-color: #3182ce;
+    color: #ffffff;
+}
+
+/* 整合性のない表があるタブに印を付ける */
+.ahp-calc-tab.is-ng::after {
+    content: " ⚠";
+    color: #e53e3e;
+}
+
+.ahp-calc-tab.is-active.is-ng::after {
+    color: #fed7d7;
+}
+
+/* ---------- C.I. の判定 ---------- */
+
+.ahp-ci {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    align-items: center;
+    margin-top: 10px;
+    font-size: 0.85rem;
+}
+
+.ahp-ci-values {
+    color: #4a5568;
+}
+
+.ahp-badge {
+    padding: 2px 10px;
+    border-radius: 999px;
+    font-size: 0.8rem;
+    font-weight: bold;
+}
+
+.ahp-badge.is-ok {
+    background-color: #c6f6d5;
+    color: #22543d;
+}
+
+.ahp-badge.is-ng {
+    background-color: #fed7d7;
+    color: #822727;
+}
+
+/* ---------- 計算結果 ---------- */
+
+/* PC では結果の枠の中だけをスクロールし、入力しながら結果を見られるようにする */
+@media (min-width: 1024px) {
+    .ahp-calc-results {
+        max-height: calc(100vh - 40px);
+        overflow-y: auto;
+    }
+}
+
+.ahp-report-goal {
+    margin: 0 0 10px;
+    font-weight: bold;
+    color: #2d3748;
+}
+
+.ahp-report-toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 10px;
+    padding: 10px 12px;
+    background-color: #f7fafc;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #4a5568;
+}
+
+.ahp-report-section {
+    padding: 14px 0;
+    border-top: 1px solid #edf2f7;
+}
+
+.ahp-report-head {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ahp-report-head h3 {
+    margin: 0;
+    font-size: 1rem;
+    color: #2d3748;
+}
+
+.ahp-report-copy {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.ahp-report-copy .btn {
+    padding: 4px 10px;
+    font-size: 0.75rem;
+}
+
+.ahp-report-message {
+    margin: 8px 0 0;
+    font-size: 0.85rem;
+    color: #c05621;
+}
+
+.ahp-report-table-wrap {
+    margin-top: 12px;
+    overflow-x: auto;
+}
+
+.ahp-report-table {
+    border-collapse: collapse;
+    font-size: 0.85rem;
+}
+
+.ahp-report-table caption {
+    margin-bottom: 4px;
+    font-weight: bold;
+    text-align: left;
+    color: #4a5568;
+}
+
+.ahp-report-table th,
+.ahp-report-table td {
+    padding: 4px 10px;
+    border: 1px solid #cbd5e0;
+    white-space: nowrap;
+}
+
+.ahp-report-table thead th {
+    background-color: #edf2f7;
+    color: #2d3748;
+}
+
+.ahp-report-table tbody th {
+    font-weight: normal;
+    text-align: left;
+}
+
+.ahp-report-table td {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+}
+
+.ahp-report-table tr.is-total {
+    background-color: #f7fafc;
+    font-weight: bold;
+}
+
+.ahp-report-table tr.is-total th {
+    font-weight: bold;
+}
+
+.ahp-report-table tr.is-best {
+    background-color: #fefcbf;
+    font-weight: bold;
+}
+
+/* コピー時に一時的に置く要素（画面には出さない） */
+.ahp-report-clipboard {
+    position: fixed;
+    left: -9999px;
+    top: 0;
+}
+
+.ahp-report-note {
+    margin: 8px 0 0;
+    font-size: 0.85rem;
+    color: #4a5568;
+}
+
+/* ---------- グループ意思決定 ---------- */
+
+.ahp-calc-add-member {
+    margin-top: 6px;
+    padding: 6px 12px;
+    font-size: 0.85rem;
+}
+
+.ahp-calc-member-tabs {
+    margin-bottom: 6px;
+}
+
+/* 「グループ統合」タブはメンバーのタブと区別する */
+.ahp-calc-tab-group {
+    border-style: dashed;
+    font-weight: bold;
+}
+
+.ahp-calc-tab-group.is-active {
+    border-style: solid;
+    border-color: #2f855a;
+    background-color: #38a169;
+}
+
+.ahp-calc-matrix .is-aggregated {
+    font-variant-numeric: tabular-nums;
+    color: #2d3748;
+}
+
+/* ---------- 感度分析 ---------- */
+
+.ahp-sens-controls {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+    align-items: center;
+    margin-bottom: 12px;
+    font-size: 0.9rem;
+}
+
+.ahp-sens-field {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: center;
+    font-weight: bold;
+    color: #4a5568;
+}
+
+.ahp-sens-check {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    color: #4a5568;
+    cursor: pointer;
+}
+
+.ahp-sens .diagram-canvas {
+    cursor: crosshair;
+    touch-action: pan-y;
+}
+
+.ahp-sens-slider {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 16px;
+    align-items: center;
+    margin: 12px 0 4px;
+    font-size: 0.9rem;
+}
+
+.ahp-sens-slider label {
+    display: flex;
+    flex: 1;
+    flex-wrap: wrap;
+    gap: 6px 12px;
+    align-items: center;
+    min-width: 240px;
+}
+
+.ahp-sens-slider output {
+    font-weight: bold;
+    font-variant-numeric: tabular-nums;
+}
+
+.ahp-sens-slider input[type="range"] {
+    flex: 1;
+    min-width: 160px;
+}
+
+.ahp-sens-slider .btn {
+    padding: 4px 10px;
+    font-size: 0.8rem;
+}
+
+.ahp-sens-readout {
+    padding: 10px 12px;
+    background-color: #f7fafc;
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+.ahp-sens-readout-title {
+    margin-bottom: 6px;
+    font-weight: bold;
+    color: #4a5568;
+}
+
+.ahp-sens-scores {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 18px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ahp-sens-scores li {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+}
+
+.ahp-sens-scores strong {
+    color: #1a202c;
+    font-variant-numeric: tabular-nums;
+}
+
+.ahp-sens-scores span {
+    color: #4a5568;
+}
+
+.ahp-sens-weights {
+    margin: 6px 0 0;
+    font-size: 0.8rem;
+    color: #718096;
+}
+
+.ahp-sens-summary {
+    margin: 10px 0 0;
+    font-size: 0.85rem;
+    color: #2d3748;
+}
+
+.ahp-sens-summary ul {
+    margin: 4px 0 0;
+    padding-left: 1.4em;
+}
+
+/* ---------- 整合性のアシスト ---------- */
+
+/* 矛盾の原因の候補のセル */
+.ahp-calc-matrix td.is-suspect {
+    background-color: #fff5f5;
+    box-shadow: inset 0 0 0 2px #e53e3e;
+    cursor: help;
+}
+
+.ahp-calc-matrix td.is-suspect .ahp-calc-select {
+    border-color: #e53e3e;
+}
+
+.ahp-adjust-btn {
+    padding: 4px 12px;
+    font-size: 0.8rem;
+}
+
+.ahp-suspects {
+    margin-top: 10px;
+    padding: 10px 12px;
+    background-color: #fff5f5;
+    border: 1px solid #fed7d7;
+    border-radius: 8px;
+    font-size: 0.85rem;
+    color: #2d3748;
+}
+
+.ahp-suspects-title {
+    margin-bottom: 6px;
+    font-weight: bold;
+    color: #822727;
+}
+
+.ahp-suspects ul {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.ahp-suspects li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 10px;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 0;
+}
+
+.ahp-suspects li + li {
+    border-top: 1px dashed #fed7d7;
+}
+
+.ahp-suspects .btn {
+    padding: 3px 10px;
+    font-size: 0.75rem;
+}
+
+/* 順位固定アシスト */
+.ahp-rank {
+    margin-top: 12px;
+    padding: 8px 12px;
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    font-size: 0.85rem;
+}
+
+.ahp-rank summary {
+    cursor: pointer;
+    font-weight: bold;
+    color: #2b6cb0;
+}
+
+.ahp-rank[open] summary {
+    margin-bottom: 8px;
+}
+
+.ahp-rank-list {
+    margin: 0 0 10px;
+    padding: 0;
+    list-style: none;
+}
+
+.ahp-rank-list li {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    margin-bottom: 4px;
+    padding: 6px 8px;
+    background-color: #f7fafc;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    cursor: grab;
+}
+
+.ahp-rank-list li.is-dragging {
+    opacity: 0.5;
+}
+
+.ahp-rank-list li.is-drop-target {
+    border-color: #3182ce;
+    box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.25);
+}
+
+.ahp-rank-handle {
+    color: #a0aec0;
+    letter-spacing: -2px;
+}
+
+.ahp-rank-no {
+    min-width: 2.8em;
+    font-weight: bold;
+    color: #4a5568;
+}
+
+.ahp-rank-name {
+    flex: 1;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.ahp-rank-list .btn {
+    padding: 2px 8px;
+    font-size: 0.8rem;
+}
+
+.ahp-rank-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 12px;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.ahp-rank-actions label {
+    display: flex;
+    gap: 6px;
+    align-items: center;
+    color: #4a5568;
+}
+
+/* 画面下の通知 */
+.ahp-toast {
+    position: fixed;
+    left: 50%;
+    bottom: 100px;
+    z-index: 100;
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    max-width: calc(100% - 32px);
+    padding: 12px 16px;
+    background-color: #2d3748;
+    border-radius: 8px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+    color: #ffffff;
+    font-size: 0.9rem;
+    opacity: 0;
+    pointer-events: none;
+    transform: translate(-50%, 10px);
+    transition: opacity 0.2s, transform 0.2s;
+}
+
+.ahp-toast.is-visible {
+    opacity: 1;
+    pointer-events: auto;
+    transform: translate(-50%, 0);
+}
+
+.ahp-toast-undo {
+    flex-shrink: 0;
+    padding: 4px 10px;
+    border: 1px solid #a0aec0;
+    border-radius: 6px;
+    background: none;
+    color: #ffffff;
+    font-weight: bold;
+    cursor: pointer;
+}

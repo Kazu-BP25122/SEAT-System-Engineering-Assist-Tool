@@ -3,24 +3,32 @@
 import { escapeHtml } from '../utils';
 import { loadNeedsData } from '../needsList/data';
 import { DEFAULT_AHP_DATA, loadAhpData, saveAhpData } from './data';
-import type { AhpData, CriteriaMode, Stakeholder } from './data';
+import type { AhpData, CriterionGroup, HierarchyLevels } from './data';
 import { mountDiagramPanel } from '../diagram/panel';
 import type { DiagramContent } from '../diagram/panel';
 import { ahpDiagramContent } from './diagram';
 
 const OUTPUT_PAGE = '/tools/ahp/output';
 
+/** 階層の数ごとの、評価基準の欄の表示 */
+const CRITERIA_TEXT: Record<HierarchyLevels, { title: string; placeholder: string; label: string }> = {
+    3: { title: '評価基準', placeholder: '例: 味, 提供の速さ, 利益', label: '評価基準' },
+    4: { title: '大基準と中基準', placeholder: '例: 来場者, 運営スタッフ', label: '大基準' },
+};
+
 let ahpData: AhpData = structuredClone(DEFAULT_AHP_DATA);
 let renderDiagram: (content: DiagramContent) => void = () => {};
 
 // ---------- データ操作 ----------
 
+function setStatus(message: string): void {
+    const statusEl = document.getElementById('data-status');
+    if (statusEl) statusEl.innerText = message;
+}
+
 function persist(): void {
     saveAhpData(ahpData);
-    const statusEl = document.getElementById('data-status');
-    if (statusEl) {
-        statusEl.innerText = `変更をローカルに保存しました (${new Date().toLocaleTimeString()})`;
-    }
+    setStatus(`変更をローカルに保存しました (${new Date().toLocaleTimeString()})`);
 }
 
 function updateDiagram(): void {
@@ -35,42 +43,62 @@ function commit(): void {
 
 // ---------- 描画 ----------
 
-function renderNeeds(sh: Stakeholder, shIdx: number): string {
-    const list = sh.needs.length === 0
-        ? '<p class="empty-items">(ニーズ項目なし)</p>'
-        : `<ul class="items-list">${sh.needs.map((need, idx) => `
+/** 名前を直接書き換えられる入力欄 */
+function nameInput(value: string, label: string, attrs: string): string {
+    return `<input type="text" class="input-flex ahp-name-input" value="${escapeHtml(value)}" aria-label="${escapeHtml(label)}" ${attrs}>`;
+}
+
+function renderSubcriteria(group: CriterionGroup, c: number): string {
+    const list = group.subcriteria.length === 0
+        ? '<p class="empty-items">(中基準なし：この大基準がそのまま代替案につながります)</p>'
+        : `<ul class="items-list">${group.subcriteria.map((sub, idx) => `
             <li>
-                <span>・ ${escapeHtml(need)}</span>
-                <button class="btn btn-danger" data-action="delete-need" data-sh="${shIdx}" data-idx="${idx}">×</button>
+                ${nameInput(sub, `${group.name} の中基準 ${idx + 1}`, `data-rename="sub" data-c="${c}" data-idx="${idx}"`)}
+                <button class="btn btn-danger" data-action="delete-sub" data-c="${c}" data-idx="${idx}">×</button>
             </li>
         `).join('')}</ul>`;
 
     return `
-        ${list}
-        <div class="add-inline-form">
-            <input type="text" class="input-flex" placeholder="＋ ニーズを追加" data-enter="add-need" data-sh="${shIdx}">
-            <button class="btn btn-secondary btn-inline" data-action="add-need" data-sh="${shIdx}">追加</button>
+        <div class="top-items-area">
+            ${list}
+            <div class="add-inline-form">
+                <input type="text" class="input-flex" placeholder="＋ 中基準を追加" data-enter="add-sub" data-c="${c}">
+                <button class="btn btn-secondary btn-inline" data-action="add-sub" data-c="${c}">追加</button>
+            </div>
         </div>
     `;
 }
 
-function renderStakeholders(): void {
-    const root = document.getElementById('stakeholder-root');
-    if (!root) return;
+function renderCriteria(): void {
+    const text = CRITERIA_TEXT[ahpData.levels];
+    const title = document.getElementById('criteria-title');
+    if (title) title.textContent = text.title;
+    const input = document.getElementById('new-criterion-input') as HTMLInputElement | null;
+    if (input) input.placeholder = text.placeholder;
 
-    if (ahpData.stakeholders.length === 0) {
-        root.innerHTML = '<p class="empty-tree">ステークホルダが登録されていません。上のフォームから追加してください。</p>';
+    const root = document.getElementById('criteria-root');
+    if (!root) return;
+    if (ahpData.criteria.length === 0) {
+        root.innerHTML = `<p class="empty-tree">${text.label}が登録されていません。上のフォームから追加してください。</p>`;
         return;
     }
-    root.innerHTML = ahpData.stakeholders.map((sh, shIdx) => `
-        <div class="top-category-block">
-            <div class="top-category-header">
-                <span>${escapeHtml(sh.name)}</span>
-                <button class="btn btn-danger" data-action="delete-stakeholder" data-sh="${shIdx}">削除</button>
+
+    root.innerHTML = ahpData.criteria.map((group, c) => {
+        // 3 層のときも中基準は残しているので、その数だけ知らせる
+        const hiddenSubs = ahpData.levels === 3 && group.subcriteria.length > 0
+            ? `<span class="ahp-hidden-subs">中基準 ${group.subcriteria.length} 件（4 層で表示）</span>`
+            : '';
+        return `
+            <div class="top-category-block">
+                <div class="top-category-header">
+                    ${nameInput(group.name, `${text.label} ${c + 1} の名前`, `data-rename="criterion" data-c="${c}"`)}
+                    ${hiddenSubs}
+                    <button class="btn btn-danger" data-action="delete-criterion" data-c="${c}">削除</button>
+                </div>
+                ${ahpData.levels === 4 ? renderSubcriteria(group, c) : ''}
             </div>
-            <div class="top-items-area">${renderNeeds(sh, shIdx)}</div>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 }
 
 function renderAlternatives(): void {
@@ -83,7 +111,7 @@ function renderAlternatives(): void {
     }
     root.innerHTML = `<ul class="items-list">${ahpData.alternatives.map((alt, idx) => `
         <li>
-            <span>・ ${escapeHtml(alt)}</span>
+            ${nameInput(alt, `代替案 ${idx + 1} の名前`, `data-rename="alternative" data-idx="${idx}"`)}
             <button class="btn btn-danger" data-action="delete-alternative" data-idx="${idx}">×</button>
         </li>
     `).join('')}</ul>`;
@@ -94,13 +122,13 @@ function syncFormValues(): void {
     const goalInput = document.getElementById('goal-input') as HTMLInputElement | null;
     if (goalInput) goalInput.value = ahpData.goal;
 
-    document.querySelectorAll<HTMLInputElement>('input[name="criteria-mode"]').forEach(radio => {
-        radio.checked = radio.value === ahpData.criteriaMode;
+    document.querySelectorAll<HTMLInputElement>('input[name="hierarchy-levels"]').forEach(radio => {
+        radio.checked = Number(radio.value) === ahpData.levels;
     });
 }
 
 function renderAll(): void {
-    renderStakeholders();
+    renderCriteria();
     renderAlternatives();
     updateDiagram();
 }
@@ -115,39 +143,40 @@ function takeInput(input: HTMLInputElement | null): string | null {
     return value;
 }
 
-function addStakeholder(): void {
-    const input = document.getElementById('new-stakeholder-input') as HTMLInputElement | null;
+function addCriterion(): void {
+    const input = document.getElementById('new-criterion-input') as HTMLInputElement | null;
     const name = input?.value.trim();
     if (!name) return;
-    if (ahpData.stakeholders.some(sh => sh.name === name)) {
-        alert('既に存在するステークホルダ名です。');
+    if (ahpData.criteria.some(c => c.name === name)) {
+        alert(`既に存在する${CRITERIA_TEXT[ahpData.levels].label}です。`);
         return;
     }
     takeInput(input);
-    ahpData.stakeholders.push({ name, needs: [] });
+    ahpData.criteria.push({ name, subcriteria: [] });
     commit();
 }
 
-function deleteStakeholder(shIdx: number): void {
-    const sh = ahpData.stakeholders[shIdx];
-    if (!sh || !confirm(`「${sh.name}」とそのニーズをすべて削除しますか？`)) return;
-    ahpData.stakeholders.splice(shIdx, 1);
+function deleteCriterion(c: number): void {
+    const group = ahpData.criteria[c];
+    const withSubs = group?.subcriteria.length ? 'とその中基準をすべて' : 'を';
+    if (!group || !confirm(`「${group.name}」${withSubs}削除しますか？`)) return;
+    ahpData.criteria.splice(c, 1);
     commit();
 }
 
-function addNeed(shIdx: number, input: HTMLInputElement | null): void {
-    const sh = ahpData.stakeholders[shIdx];
+function addSubcriterion(c: number, input: HTMLInputElement | null): void {
+    const group = ahpData.criteria[c];
     const text = takeInput(input);
-    if (!sh || !text) return;
-    sh.needs.push(text);
+    if (!group || !text) return;
+    group.subcriteria.push(text);
     commit();
 
     // 再描画後、同じ入力欄にフォーカスを戻して連続入力できるようにする
-    document.querySelector<HTMLInputElement>(`#stakeholder-root input[data-sh="${shIdx}"]`)?.focus();
+    document.querySelector<HTMLInputElement>(`#criteria-root input[data-enter="add-sub"][data-c="${c}"]`)?.focus();
 }
 
-function deleteNeed(shIdx: number, idx: number): void {
-    ahpData.stakeholders[shIdx]?.needs.splice(idx, 1);
+function deleteSubcriterion(c: number, idx: number): void {
+    ahpData.criteria[c]?.subcriteria.splice(idx, 1);
     commit();
 }
 
@@ -163,7 +192,36 @@ function deleteAlternative(idx: number): void {
     commit();
 }
 
-/** ニーズリスト作成ツールのデータをステークホルダとして取り込む（サブカテゴリのニーズは親にまとめる） */
+/** 名前の入力欄の値をデータに反映する。空のまま確定したときは仮の名前を付ける */
+function renameItem(el: HTMLInputElement, confirmed: boolean): void {
+    const c = Number(el.dataset.c);
+    const idx = Number(el.dataset.idx);
+    let value = el.value;
+    if (confirmed && !value.trim()) {
+        const fallback = { criterion: `基準${c + 1}`, sub: `中基準${idx + 1}`, alternative: `代替案${idx + 1}` };
+        value = fallback[el.dataset.rename as keyof typeof fallback] ?? '無題';
+        el.value = value;
+    }
+
+    switch (el.dataset.rename) {
+        case 'criterion':
+            if (ahpData.criteria[c]) ahpData.criteria[c].name = value;
+            break;
+        case 'sub':
+            if (ahpData.criteria[c]) ahpData.criteria[c].subcriteria[idx] = value;
+            break;
+        case 'alternative':
+            ahpData.alternatives[idx] = value;
+            break;
+        default:
+            return;
+    }
+    // 入力中は再描画せず図だけを更新する（入力欄のフォーカスを失わないように）
+    persist();
+    updateDiagram();
+}
+
+/** ニーズリスト作成ツールのデータを大基準（ステークホルダ）と中基準（ニーズ）として取り込む */
 function importFromNeedsList(): void {
     const needsData = loadNeedsData({});
     const entries = Object.entries(needsData);
@@ -171,21 +229,23 @@ function importFromNeedsList(): void {
         alert('ニーズリストのデータがありません。先にニーズリスト作成ツールで入力してください。');
         return;
     }
-    if (ahpData.stakeholders.length > 0
-        && !confirm('現在のステークホルダとニーズをニーズリストのデータで置き換えますか？')) {
+    if (ahpData.criteria.length > 0
+        && !confirm('現在の評価基準をニーズリストのデータで置き換えますか？')) {
         return;
     }
-    ahpData.stakeholders = entries.map(([name, val]) => ({
+    // サブカテゴリのニーズは親にまとめる
+    ahpData.criteria = entries.map(([name, val]) => ({
         name,
-        needs: Array.isArray(val) ? [...val] : Object.values(val).flat(),
+        subcriteria: Array.isArray(val) ? [...val] : Object.values(val).flat(),
     }));
     commit();
+    setStatus('ニーズリストのステークホルダを大基準、ニーズを中基準として読み込みました');
 }
 
 function resetToDefault(): void {
     if (!confirm('入力内容をすべて消去しますか？')) return;
-    // 図の向きは入力内容ではないので引き継ぐ
-    ahpData = { ...structuredClone(DEFAULT_AHP_DATA), orientation: ahpData.orientation };
+    // 図の向きと階層の数は入力内容ではないので引き継ぐ
+    ahpData = { ...structuredClone(DEFAULT_AHP_DATA), orientation: ahpData.orientation, levels: ahpData.levels };
     syncFormValues();
     commit();
 }
@@ -203,17 +263,17 @@ function siblingInput(el: HTMLElement): HTMLInputElement | null {
     return el.closest('.add-inline-form')?.querySelector('input') ?? null;
 }
 
-function handleStakeholderAction(action: string, el: HTMLElement): void {
-    const shIdx = Number(el.dataset.sh);
+function handleCriteriaAction(action: string, el: HTMLElement): void {
+    const c = Number(el.dataset.c);
     switch (action) {
-        case 'delete-stakeholder':
-            deleteStakeholder(shIdx);
+        case 'delete-criterion':
+            deleteCriterion(c);
             break;
-        case 'add-need':
-            addNeed(shIdx, siblingInput(el));
+        case 'add-sub':
+            addSubcriterion(c, siblingInput(el));
             break;
-        case 'delete-need':
-            deleteNeed(shIdx, Number(el.dataset.idx));
+        case 'delete-sub':
+            deleteSubcriterion(c, Number(el.dataset.idx));
             break;
     }
 }
@@ -225,13 +285,25 @@ function onEnter(id: string, handler: () => void): void {
     });
 }
 
+/** 名前の入力欄（評価基準・代替案の両方）の変更を受け取る */
+function bindRenameEvents(root: HTMLElement | null): void {
+    root?.addEventListener('input', e => {
+        const el = e.target as HTMLInputElement;
+        if (el.dataset.rename) renameItem(el, false);
+    });
+    root?.addEventListener('change', e => {
+        const el = e.target as HTMLInputElement;
+        if (el.dataset.rename) renameItem(el, true);
+    });
+}
+
 function bindEvents(): void {
     document.getElementById('reset-btn')?.addEventListener('click', resetToDefault);
     document.getElementById('save-navigate-btn')?.addEventListener('click', saveAndNavigate);
     document.getElementById('import-needs-btn')?.addEventListener('click', importFromNeedsList);
 
-    document.getElementById('add-stakeholder-btn')?.addEventListener('click', addStakeholder);
-    onEnter('new-stakeholder-input', addStakeholder);
+    document.getElementById('add-criterion-btn')?.addEventListener('click', addCriterion);
+    onEnter('new-criterion-input', addCriterion);
     document.getElementById('add-alternative-btn')?.addEventListener('click', addAlternative);
     onEnter('new-alternative-input', addAlternative);
 
@@ -242,28 +314,30 @@ function bindEvents(): void {
         updateDiagram();
     });
 
-    document.querySelectorAll<HTMLInputElement>('input[name="criteria-mode"]').forEach(radio => {
+    document.querySelectorAll<HTMLInputElement>('input[name="hierarchy-levels"]').forEach(radio => {
         radio.addEventListener('change', () => {
-            ahpData.criteriaMode = radio.value as CriteriaMode;
-            persist();
-            updateDiagram();
+            ahpData.levels = Number(radio.value) === 4 ? 4 : 3;
+            commit();
         });
     });
 
-    const shRoot = document.getElementById('stakeholder-root');
-    shRoot?.addEventListener('click', e => {
+    const criteriaRoot = document.getElementById('criteria-root');
+    criteriaRoot?.addEventListener('click', e => {
         const el = (e.target as HTMLElement).closest<HTMLElement>('[data-action]');
-        if (el?.dataset.action) handleStakeholderAction(el.dataset.action, el);
+        if (el?.dataset.action) handleCriteriaAction(el.dataset.action, el);
     });
-    shRoot?.addEventListener('keydown', e => {
+    criteriaRoot?.addEventListener('keydown', e => {
         const el = e.target as HTMLElement;
-        if (e.key === 'Enter' && !e.isComposing && el.dataset.enter) handleStakeholderAction(el.dataset.enter, el);
+        if (e.key === 'Enter' && !e.isComposing && el.dataset.enter) handleCriteriaAction(el.dataset.enter, el);
     });
+    bindRenameEvents(criteriaRoot);
 
-    document.getElementById('alternative-root')?.addEventListener('click', e => {
+    const alternativeRoot = document.getElementById('alternative-root');
+    alternativeRoot?.addEventListener('click', e => {
         const el = (e.target as HTMLElement).closest<HTMLElement>('[data-action="delete-alternative"]');
         if (el) deleteAlternative(Number(el.dataset.idx));
     });
+    bindRenameEvents(alternativeRoot);
 }
 
 export function initAhpInput(): void {
