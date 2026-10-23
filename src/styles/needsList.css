@@ -57,6 +57,29 @@
     justify-content: space-between;
     align-items: center;
     font-size: 0.88rem;
+    gap: 8px;
+}
+
+.needs-name-input {
+    font-size: inherit;
+    font-weight: inherit;
+    border: 1px solid transparent;
+    background: transparent;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: inherit;
+}
+
+.needs-name-input:hover {
+    border-color: #cbd5e0;
+    background: #fff;
+}
+
+.needs-name-input:focus {
+    border-color: #3182ce;
+    background: #fff;
+    outline: none;
+    box-shadow: 0 0 0 1px #3182ce;
 }
 
 .add-inline-form {
@@ -100,6 +123,16 @@
 .status-text {
     font-size: 0.85rem;
     color: #718096;
+}
+
+.table-preview-container {
+    overflow-x: auto;
+}
+
+.empty-table-text {
+    color: #a0aec0;
+    text-align: center;
+    padding: 20px;
 }
 
 /* ---------- 出力ページ ---------- */

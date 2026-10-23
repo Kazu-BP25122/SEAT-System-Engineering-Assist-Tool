@@ -16,20 +16,20 @@ function renderLeafList(items: string[]): string {
     return `<ul class="tree-leaf-list">${lis}</ul>`;
 }
 
-function renderTreeHtml(data: TreeDiagramData): string {
+export function renderTreeHtml(data: TreeDiagramData, idPrefix: string = ''): string {
     const isDataEmpty = !data.title && data.categories.length === 0;
     if (isDataEmpty) {
         return `
             <div class="empty-diagram-message">
                 <p>展開図のデータが登録されていません。</p>
-                <p>上の「← 編集に戻る」ボタンからデータを入力してください。</p>
+                <p>${idPrefix ? 'フォームからデータを入力してください。' : '上の「← 編集に戻る」ボタンからデータを入力してください。'}</p>
             </div>
         `;
     }
 
     const rootHtml = `
         <div class="tree-level tree-level-1">
-            <div class="tree-node tree-node-root" id="node-root">
+            <div class="tree-node tree-node-root" id="${idPrefix}node-root">
                 ${escapeHtml(data.title || '（無題）')}
             </div>
         </div>
@@ -37,15 +37,15 @@ function renderTreeHtml(data: TreeDiagramData): string {
 
     const categoriesHtml = data.categories
         .map((cat, catIdx) => {
-            const catNodeId = `node-cat-${catIdx}`;
+            const catNodeId = `${idPrefix}node-cat-${catIdx}`;
 
             let childrenHtml = '';
             if (cat.subCategories.length > 0) {
                 // 第3層がある場合
                 const subCols = cat.subCategories
                     .map((sub, subIdx) => {
-                        const subNodeId = `node-sub-${catIdx}-${subIdx}`;
-                        const leafNodeId = `node-leaf-${catIdx}-${subIdx}`;
+                        const subNodeId = `${idPrefix}node-sub-${catIdx}-${subIdx}`;
+                        const leafNodeId = `${idPrefix}node-leaf-${catIdx}-${subIdx}`;
                         return `
                         <div class="tree-column">
                             <div class="tree-node tree-node-sub" id="${subNodeId}">
@@ -62,7 +62,7 @@ function renderTreeHtml(data: TreeDiagramData): string {
                 childrenHtml = `<div class="tree-sub-wrapper">${subCols}</div>`;
             } else {
                 // 第3層がなく、直接第4層の項目を持つ場合
-                const leafNodeId = `node-direct-leaf-${catIdx}`;
+                const leafNodeId = `${idPrefix}node-direct-leaf-${catIdx}`;
                 childrenHtml = `
                     <div class="tree-direct-leaf-wrapper">
                         <div class="tree-column">
@@ -86,9 +86,9 @@ function renderTreeHtml(data: TreeDiagramData): string {
         .join('');
 
     return `
-        <div class="diagram-canvas-wrapper" id="diagram-canvas-wrapper">
-            <svg class="tree-svg-layer" id="tree-svg-layer" xmlns="http://www.w3.org/2000/svg"></svg>
-            <div class="tree-nodes-layer" id="tree-nodes-layer">
+        <div class="diagram-canvas-wrapper" id="${idPrefix}diagram-canvas-wrapper">
+            <svg class="tree-svg-layer" id="${idPrefix}tree-svg-layer" xmlns="http://www.w3.org/2000/svg"></svg>
+            <div class="tree-nodes-layer" id="${idPrefix}tree-nodes-layer">
                 ${rootHtml}
                 <div class="tree-categories-wrapper">
                     ${categoriesHtml}
@@ -157,12 +157,14 @@ function createDirectLinePath(parentBottom: Point, childTop: Point): string {
     return `M ${parentBottom.x} ${parentBottom.y} L ${childTop.x} ${childTop.y}`;
 }
 
-export function drawConnections(): void {
-    const wrapper = document.getElementById('diagram-canvas-wrapper');
-    const svg = document.getElementById('tree-svg-layer') as SVGSVGElement | null;
+export function drawConnections(data: TreeDiagramData = currentData, idPrefix: string = ''): void {
+    const wrapper = document.getElementById(`${idPrefix}diagram-canvas-wrapper`);
+    const svg = document.getElementById(`${idPrefix}tree-svg-layer`) as SVGSVGElement | null;
     if (!wrapper || !svg) return;
 
     const wrapperRect = wrapper.getBoundingClientRect();
+    if (wrapperRect.width === 0 || wrapperRect.height === 0) return;
+
     svg.setAttribute('xmlns', 'http://www.w3.org/2000/svg');
     svg.setAttribute('width', `${wrapperRect.width}`);
     svg.setAttribute('height', `${wrapperRect.height}`);
@@ -171,9 +173,9 @@ export function drawConnections(): void {
     let pathData = '';
 
     // 1. ルートノードから第2層（カテゴリ群）への接続線
-    const rootEl = document.getElementById('node-root');
-    const catEls = currentData.categories
-        .map((_, idx) => document.getElementById(`node-cat-${idx}`))
+    const rootEl = document.getElementById(`${idPrefix}node-root`);
+    const catEls = data.categories
+        .map((_, idx) => document.getElementById(`${idPrefix}node-cat-${idx}`))
         .filter((el): el is HTMLElement => el !== null);
 
     if (rootEl && catEls.length > 0) {
@@ -183,15 +185,15 @@ export function drawConnections(): void {
     }
 
     // 2. 各カテゴリから第3層（サブカテゴリ群）または第4層直下への接続線
-    currentData.categories.forEach((cat, catIdx) => {
-        const catEl = document.getElementById(`node-cat-${catIdx}`);
+    data.categories.forEach((cat, catIdx) => {
+        const catEl = document.getElementById(`${idPrefix}node-cat-${catIdx}`);
         if (!catEl) return;
         const catBounds = getNodeBounds(catEl, wrapperRect);
 
         if (cat.subCategories.length > 0) {
             // 第3層への接続
             const subEls = cat.subCategories
-                .map((_, subIdx) => document.getElementById(`node-sub-${catIdx}-${subIdx}`))
+                .map((_, subIdx) => document.getElementById(`${idPrefix}node-sub-${catIdx}-${subIdx}`))
                 .filter((el): el is HTMLElement => el !== null);
 
             if (subEls.length > 0) {
@@ -201,8 +203,8 @@ export function drawConnections(): void {
 
             // 3. 各第3層から直下の第4層（箇条書き）への接続線（垂直直線）
             cat.subCategories.forEach((_, subIdx) => {
-                const subEl = document.getElementById(`node-sub-${catIdx}-${subIdx}`);
-                const leafEl = document.getElementById(`node-leaf-${catIdx}-${subIdx}`);
+                const subEl = document.getElementById(`${idPrefix}node-sub-${catIdx}-${subIdx}`);
+                const leafEl = document.getElementById(`${idPrefix}node-leaf-${catIdx}-${subIdx}`);
                 if (subEl && leafEl) {
                     const subBounds = getNodeBounds(subEl, wrapperRect);
                     const leafBounds = getNodeBounds(leafEl, wrapperRect);
@@ -211,7 +213,7 @@ export function drawConnections(): void {
             });
         } else {
             // 直下の箇条書きへの接続
-            const leafEl = document.getElementById(`node-direct-leaf-${catIdx}`);
+            const leafEl = document.getElementById(`${idPrefix}node-direct-leaf-${catIdx}`);
             if (leafEl) {
                 const leafBounds = getNodeBounds(leafEl, wrapperRect);
                 pathData += createDirectLinePath(catBounds.bottomCenter, leafBounds.topCenter) + ' ';
@@ -488,8 +490,8 @@ export function initTreeDiagramOutput(): void {
         }
 
         // リサイズやフォントロード完了時にも再描画
-        window.addEventListener('resize', drawConnections);
-        window.addEventListener('load', drawConnections);
+        window.addEventListener('resize', () => drawConnections());
+        window.addEventListener('load', () => drawConnections());
 
         // 操作ボタンのバインド
         exportBtn?.addEventListener('click', exportToPng);

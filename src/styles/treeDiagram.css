@@ -80,6 +80,7 @@
     align-items: center;
     gap: 8px;
     flex: 1;
+    margin-right: 12px;
 }
 
 .level-tag {
@@ -108,6 +109,47 @@
     font-size: 1.05rem;
     font-weight: bold;
     color: #2d3748;
+}
+
+.tree-name-input {
+    font-size: inherit;
+    font-weight: inherit;
+    border: 1px solid transparent;
+    background: transparent;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: inherit;
+}
+
+.tree-name-input:hover {
+    border-color: #cbd5e0;
+    background: #fff;
+}
+
+.tree-name-input:focus {
+    border-color: #3182ce;
+    background: #fff;
+    outline: none;
+    box-shadow: 0 0 0 1px #3182ce;
+}
+
+.tree-name-cat {
+    font-size: 1.05rem;
+    font-weight: bold;
+    color: #2d3748;
+    flex: 1;
+}
+
+.tree-name-sub {
+    font-size: 0.95rem;
+    font-weight: bold;
+    color: #2d3748;
+    flex: 1;
+}
+
+.tree-name-item {
+    font-size: 0.88rem;
+    flex: 1;
 }
 
 .cat-actions {
@@ -143,6 +185,8 @@
     display: flex;
     align-items: center;
     gap: 8px;
+    flex: 1;
+    margin-right: 12px;
 }
 
 .sub-title-text {
@@ -168,6 +212,7 @@
     justify-content: space-between;
     align-items: center;
     font-size: 0.88rem;
+    gap: 8px;
 }
 
 .item-bullet {
@@ -390,7 +435,7 @@
     box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
 }
 
-/* 第4層ノード（箇条書き詳細項目） */
+/* 第4層ノード（箇条書き詳細項目リスト） */
 .tree-node-leaf {
     width: 100%;
     padding: 12px 14px;

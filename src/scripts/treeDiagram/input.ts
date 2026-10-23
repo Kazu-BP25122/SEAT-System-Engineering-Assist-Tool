@@ -8,6 +8,7 @@ import {
     saveTreeData,
 } from './data';
 import type { TreeCategory, TreeDiagramData, TreeSubCategory } from './data';
+import { drawConnections, renderTreeHtml } from './output';
 
 const OUTPUT_PAGE = '/tools/treeDiagram/output';
 
@@ -19,17 +20,32 @@ function persist(): void {
     saveTreeData(treeData);
 }
 
-function commit(): void {
-    persist();
-    updateStatusText();
-    renderTreeEditor();
-}
-
 function updateStatusText(): void {
     const statusEl = document.getElementById('data-status');
     if (statusEl) {
         statusEl.innerText = `変更をローカルに保存しました (${new Date().toLocaleTimeString()})`;
     }
+}
+
+function updatePreview(): void {
+    const container = document.getElementById('tree-preview-container');
+    if (!container) return;
+
+    container.innerHTML = renderTreeHtml(treeData, 'preview-');
+
+    requestAnimationFrame(() => {
+        drawConnections(treeData, 'preview-');
+    });
+    setTimeout(() => {
+        drawConnections(treeData, 'preview-');
+    }, 50);
+}
+
+function commit(): void {
+    persist();
+    updateStatusText();
+    renderTreeEditor();
+    updatePreview();
 }
 
 function resetToDefault(): void {
@@ -44,6 +60,11 @@ function resetToDefault(): void {
 
 // ---------- レンダリング ----------
 
+/** 名前を直接書き換えられる入力欄 */
+function nameInput(value: string, label: string, attrs: string, extraClass = ''): string {
+    return `<input type="text" class="input-flex tree-name-input ${extraClass}" value="${escapeHtml(value)}" aria-label="${escapeHtml(label)}" ${attrs}>`;
+}
+
 function renderLeafItems(catId: string, subId: string | null, items: string[]): string {
     if (items.length === 0) {
         return '<p class="empty-items-text">(詳細項目なし)</p>';
@@ -53,7 +74,8 @@ function renderLeafItems(catId: string, subId: string | null, items: string[]): 
         .map(
             (item, idx) => `
         <li class="item-row">
-            <span class="item-text"><span class="item-bullet">・</span>${escapeHtml(item)}</span>
+            <span class="item-bullet">・</span>
+            ${nameInput(item, `詳細項目 ${idx + 1}`, `data-rename="item" data-cat="${catId}" ${subId ? `data-sub="${subId}"` : ''} data-idx="${idx}"`, 'tree-name-item')}
             <button class="btn btn-danger" data-action="delete-item" data-cat="${catId}" ${subId ? `data-sub="${subId}"` : ''} data-idx="${idx}" title="削除">×</button>
         </li>
     `,
@@ -79,7 +101,7 @@ function renderSubCategory(cat: TreeCategory, sub: TreeSubCategory): string {
             <div class="sub-header">
                 <div class="sub-title-area">
                     <span class="level-tag tag-l3">第3層</span>
-                    <span class="sub-title-text">${escapeHtml(sub.name)}</span>
+                    ${nameInput(sub.name, '中項目名', `data-rename="sub" data-cat="${cat.id}" data-sub="${sub.id}"`, 'tree-name-sub')}
                 </div>
                 <button class="btn btn-danger" data-action="delete-sub" data-cat="${cat.id}" data-sub="${sub.id}">中項目を削除</button>
             </div>
@@ -127,7 +149,7 @@ function renderCategoryBlock(cat: TreeCategory): string {
             <div class="cat-header">
                 <div class="cat-title-area">
                     <span class="level-tag tag-l2">第2層</span>
-                    <span class="cat-title-text">${escapeHtml(cat.name)}</span>
+                    ${nameInput(cat.name, '大項目名', `data-rename="cat" data-cat="${cat.id}"`, 'tree-name-cat')}
                 </div>
                 <div class="cat-actions">
                     <button class="btn btn-danger" data-action="delete-cat" data-cat="${cat.id}">大項目を削除</button>
@@ -158,6 +180,7 @@ function handleThemeChange(val: string): void {
     treeData.title = val.trim();
     persist();
     updateStatusText();
+    updatePreview();
 }
 
 function addCategory(): void {
@@ -268,6 +291,44 @@ function siblingInput(el: HTMLElement): HTMLInputElement | null {
     return el.closest('.add-inline-form')?.querySelector('input') ?? null;
 }
 
+/** 名前の入力欄の値をデータに反映する。空のまま確定したときは仮の名前を付ける */
+function renameItem(el: HTMLInputElement, confirmed: boolean): void {
+    const type = el.dataset.rename;
+    const catId = el.dataset.cat;
+    const subId = el.dataset.sub;
+    const idx = el.dataset.idx !== undefined ? Number(el.dataset.idx) : null;
+    let value = el.value;
+
+    const cat = treeData.categories.find(c => c.id === catId);
+    if (!cat) return;
+
+    if (confirmed && !value.trim()) {
+        if (type === 'cat') value = '大項目';
+        else if (type === 'sub') value = '中項目';
+        else if (type === 'item') value = `詳細項目 ${(idx ?? 0) + 1}`;
+        el.value = value;
+    }
+
+    if (type === 'cat') {
+        cat.name = value;
+    } else if (type === 'sub') {
+        const sub = cat.subCategories.find(s => s.id === subId);
+        if (sub) sub.name = value;
+    } else if (type === 'item') {
+        if (subId) {
+            const sub = cat.subCategories.find(s => s.id === subId);
+            if (sub && idx !== null && sub.items[idx] !== undefined) {
+                sub.items[idx] = value;
+            }
+        } else if (cat.items && idx !== null && cat.items[idx] !== undefined) {
+            cat.items[idx] = value;
+        }
+    }
+
+    persist();
+    updatePreview();
+}
+
 function handleEditorAction(action: string, el: HTMLElement): void {
     const catId = el.dataset.cat || '';
     const subId = el.dataset.sub || null;
@@ -302,6 +363,18 @@ function saveAndNavigate(): void {
     window.location.href = OUTPUT_PAGE;
 }
 
+/** 名前の入力欄の変更を受け取る */
+function bindRenameEvents(root: HTMLElement | null): void {
+    root?.addEventListener('input', e => {
+        const el = e.target as HTMLInputElement;
+        if (el.dataset.rename) renameItem(el, false);
+    });
+    root?.addEventListener('change', e => {
+        const el = e.target as HTMLInputElement;
+        if (el.dataset.rename) renameItem(el, true);
+    });
+}
+
 // ---------- イベント設定 ----------
 
 function bindEvents(): void {
@@ -317,7 +390,7 @@ function bindEvents(): void {
     // 大項目追加
     document.getElementById('add-cat-btn')?.addEventListener('click', addCategory);
     document.getElementById('new-cat-input')?.addEventListener('keydown', e => {
-        if (e.key === 'Enter') addCategory();
+        if (e.key === 'Enter' && !e.isComposing) addCategory();
     });
 
     // 確定遷移
@@ -332,9 +405,21 @@ function bindEvents(): void {
 
     editorRoot?.addEventListener('keydown', e => {
         const el = e.target as HTMLElement;
-        if (e.key === 'Enter' && el.dataset.enter) {
+        if (e.key === 'Enter' && !e.isComposing && el.dataset.enter) {
             handleEditorAction(el.dataset.enter, el);
         }
+    });
+
+    bindRenameEvents(editorRoot);
+
+    // スマホタブ切り替え時やウィンドウリサイズ時にもプレビューの接続線を再描画
+    document.querySelectorAll('[data-workspace-tab]').forEach(tab => {
+        tab.addEventListener('click', () => {
+            setTimeout(() => drawConnections(treeData, 'preview-'), 50);
+        });
+    });
+    window.addEventListener('resize', () => {
+        drawConnections(treeData, 'preview-');
     });
 }
 
@@ -351,4 +436,5 @@ export function initTreeDiagramInput(): void {
 
     bindEvents();
     renderTreeEditor();
+    updatePreview();
 }

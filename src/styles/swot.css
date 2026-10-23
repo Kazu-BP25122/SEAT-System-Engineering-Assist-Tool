@@ -4,7 +4,7 @@
 
 .swot-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
     gap: 20px;
     margin-top: 10px;
 }
@@ -34,6 +34,28 @@
     justify-content: space-between;
     align-items: center;
     font-size: 0.88rem;
+    gap: 8px;
+}
+
+.swot-item-input {
+    font-size: 0.9rem;
+    border: 1px solid transparent;
+    background: transparent;
+    padding: 2px 6px;
+    border-radius: 4px;
+    color: inherit;
+}
+
+.swot-item-input:hover {
+    border-color: #cbd5e0;
+    background: #fff;
+}
+
+.swot-item-input:focus {
+    border-color: #3182ce;
+    background: #fff;
+    outline: none;
+    box-shadow: 0 0 0 1px #3182ce;
 }
 
 .swot-card.cross-swot .items-list li {
@@ -61,6 +83,10 @@
 .status-text {
     font-size: 0.85rem;
     color: #718096;
+}
+
+.swot-preview-wrapper {
+    overflow-x: auto;
 }
 
 /* ---------- 出力ページ ---------- */
