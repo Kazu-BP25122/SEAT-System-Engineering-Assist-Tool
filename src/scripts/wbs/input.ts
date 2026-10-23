@@ -1,8 +1,14 @@
 // 作業一覧表（WBS）の入力画面ロジック
 
 import { escapeHtml } from '../utils';
-import { loadWbsData, saveWbsData, SAMPLE_WBS_DATA, DEFAULT_WBS_DATA } from './data';
-import type { WbsData, WbsItem } from './data';
+import {
+    DEFAULT_WBS_DATA,
+    SAMPLE_WBS_DATA,
+    flattenWbsData,
+    loadWbsData,
+    saveWbsData,
+} from './data';
+import type { WbsData, WbsGroup, WbsTask } from './data';
 import { createWbsTableHtml } from './output';
 
 const OUTPUT_PAGE = '/tools/wbs/output/';
@@ -24,63 +30,138 @@ function updatePreview(): void {
     }
 }
 
-/** ユニークなIDを生成する */
-function createId(): string {
-    return `item-${Date.now()}-${Math.random().toString(36).substring(2, 9)}`;
+function createId(prefix: string): string {
+    return `${prefix}-${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
 }
 
-/** エディタテーブルの各行HTMLを生成する */
-function renderEditorRows(): string {
-    if (wbsData.items.length === 0) {
+/** グループブロック全体のHTMLを生成する */
+function renderGroups(): string {
+    if (wbsData.groups.length === 0) {
         return `
-            <tr>
-                <td colspan="6" class="wbs-editor-empty">
-                    作業項目がありません。「行を追加」ボタンを押して項目を追加してください。
-                </td>
-            </tr>
+            <div class="wbs-empty-groups">
+                親グループがありません。上の入力欄から「親グループを追加」してください。
+            </div>
         `;
     }
 
-    return wbsData.items.map((item, index) => {
-        const isFirst = index === 0;
-        const isLast = index === wbsData.items.length - 1;
-        const isParent = !item.symbol && !item.duration;
+    // 各アイテムの自動WBS番号と自動記号を引けるようにマップを作成
+    const flatItems = flattenWbsData(wbsData);
+    const itemMap = new Map(flatItems.map(it => [it.id, it]));
+
+    return wbsData.groups.map((group, gIdx) => {
+        const isFirstGroup = gIdx === 0;
+        const isLastGroup = gIdx === wbsData.groups.length - 1;
+        const groupFlat = itemMap.get(group.id);
+        const groupWbs = groupFlat ? groupFlat.wbs : `${gIdx + 1}.`;
+        const hasTasks = group.tasks.length > 0;
+
+        // 子作業テーブル
+        let tasksHtml = '';
+        if (hasTasks) {
+            const taskRows = group.tasks.map((task, tIdx) => {
+                const taskFlat = itemMap.get(task.id);
+                const taskWbs = taskFlat ? taskFlat.wbs : `${gIdx + 1}.${tIdx + 1}`;
+                const taskSymbol = taskFlat ? taskFlat.symbol : '';
+                const isFirstTask = tIdx === 0;
+                const isLastTask = tIdx === group.tasks.length - 1;
+
+                return `
+                    <tr class="wbs-task-row" data-task-id="${task.id}" data-group-index="${gIdx}" data-task-index="${tIdx}">
+                        <td class="cell-task-wbs"><span class="badge-wbs">${taskWbs}</span></td>
+                        <td class="cell-task-name">
+                            <input type="text" class="form-control input-sm" data-field="task-name" value="${escapeHtml(task.name)}" placeholder="作業名" aria-label="作業の名称">
+                        </td>
+                        <td class="cell-task-symbol"><span class="badge-symbol">${taskSymbol}</span></td>
+                        <td class="cell-task-predecessors">
+                            <input type="text" class="form-control input-sm text-center" data-field="task-predecessors" value="${escapeHtml(task.predecessors)}" placeholder="例: A または -" aria-label="先行作業">
+                        </td>
+                        <td class="cell-task-duration">
+                            <input type="text" class="form-control input-sm text-center" data-field="task-duration" value="${escapeHtml(task.duration)}" placeholder="例: 4" aria-label="所要時間">
+                        </td>
+                        <td class="cell-task-actions">
+                            <div class="row-btn-group">
+                                <button type="button" class="btn btn-icon" data-action="move-up-task" title="上へ移動" ${isFirstTask ? 'disabled' : ''}>↑</button>
+                                <button type="button" class="btn btn-icon" data-action="move-down-task" title="下へ移動" ${isLastTask ? 'disabled' : ''}>↓</button>
+                                <button type="button" class="btn btn-icon btn-delete" data-action="delete-task" title="作業を削除">×</button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            tasksHtml = `
+                <div class="wbs-tasks-table-container">
+                    <table class="wbs-tasks-table">
+                        <thead>
+                            <tr>
+                                <th style="width: 70px;">WBS</th>
+                                <th>作業の名称</th>
+                                <th style="width: 55px;">記号</th>
+                                <th style="width: 95px;">先行作業</th>
+                                <th style="width: 80px;">所要時間</th>
+                                <th style="width: 85px;">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            ${taskRows}
+                        </tbody>
+                    </table>
+                </div>
+            `;
+        }
+
+        // 子タスクがない場合の単独作業用入力欄
+        const singleTaskFields = !hasTasks ? `
+            <div class="wbs-single-task-fields">
+                <span class="badge-symbol">${groupFlat ? groupFlat.symbol : 'A'}</span>
+                <div class="single-field-group">
+                    <label>先行作業:</label>
+                    <input type="text" class="form-control input-sm text-center" data-field="group-predecessors" value="${escapeHtml(group.predecessors ?? '-')}" placeholder="-">
+                </div>
+                <div class="single-field-group">
+                    <label>所要時間:</label>
+                    <input type="text" class="form-control input-sm text-center" data-field="group-duration" value="${escapeHtml(group.duration ?? '')}" placeholder="4">
+                </div>
+            </div>
+        ` : '';
 
         return `
-            <tr class="wbs-editor-row ${isParent ? 'is-parent-row' : ''}" data-id="${item.id}" data-index="${index}">
-                <td class="col-wbs">
-                    <input type="text" class="form-control input-sm" data-field="wbs" value="${escapeHtml(item.wbs)}" placeholder="1. / 2.1" aria-label="WBS番号">
-                </td>
-                <td class="col-name">
-                    <input type="text" class="form-control input-sm" data-field="name" value="${escapeHtml(item.name)}" placeholder="作業名" aria-label="作業の名称">
-                </td>
-                <td class="col-symbol">
-                    <input type="text" class="form-control input-sm text-center" data-field="symbol" value="${escapeHtml(item.symbol)}" placeholder="A" aria-label="記号">
-                </td>
-                <td class="col-predecessors">
-                    <input type="text" class="form-control input-sm text-center" data-field="predecessors" value="${escapeHtml(item.predecessors)}" placeholder="-" aria-label="先行作業">
-                </td>
-                <td class="col-duration">
-                    <input type="text" class="form-control input-sm text-center" data-field="duration" value="${escapeHtml(item.duration)}" placeholder="4" aria-label="所要時間">
-                </td>
-                <td class="col-actions">
-                    <div class="row-btn-group">
-                        <button type="button" class="btn btn-icon" data-action="move-up" title="上へ移動" ${isFirst ? 'disabled' : ''}>↑</button>
-                        <button type="button" class="btn btn-icon" data-action="move-down" title="下へ移動" ${isLast ? 'disabled' : ''}>↓</button>
-                        <button type="button" class="btn btn-icon btn-insert" data-action="insert-below" title="直下に行を挿入">＋</button>
-                        <button type="button" class="btn btn-icon btn-delete" data-action="delete" title="行を削除">×</button>
+            <div class="wbs-group-block" data-group-id="${group.id}" data-group-index="${gIdx}">
+                <div class="wbs-group-header">
+                    <div class="wbs-group-title-area">
+                        <span class="badge-group-wbs">${groupWbs}</span>
+                        <input type="text" class="form-control group-name-input" data-field="group-name" value="${escapeHtml(group.name)}" placeholder="グループ名（例: 機械開発）" aria-label="グループ名">
                     </div>
-                </td>
-            </tr>
+                    ${singleTaskFields}
+                    <div class="wbs-group-actions">
+                        <button type="button" class="btn btn-secondary btn-xs" data-action="move-up-group" title="親グループを上へ移動" ${isFirstGroup ? 'disabled' : ''}>↑</button>
+                        <button type="button" class="btn btn-secondary btn-xs" data-action="move-down-group" title="親グループを下へ移動" ${isLastGroup ? 'disabled' : ''}>↓</button>
+                        <button type="button" class="btn btn-danger btn-xs" data-action="delete-group" title="親グループを削除">グループ削除</button>
+                    </div>
+                </div>
+
+                <div class="wbs-group-body">
+                    ${tasksHtml}
+
+                    <div class="add-task-form">
+                        <div class="add-task-inputs">
+                            <input type="text" class="form-control input-sm add-task-name" placeholder="＋ 作業を追加 (例: 機械設計)" data-enter="add-task" data-group-index="${gIdx}">
+                            <input type="text" class="form-control input-sm text-center add-task-pred" placeholder="先行 (例: A)" data-group-index="${gIdx}">
+                            <input type="text" class="form-control input-sm text-center add-task-dur" placeholder="時間" data-group-index="${gIdx}">
+                        </div>
+                        <button type="button" class="btn btn-primary btn-inline" data-action="add-task" data-group-index="${gIdx}">作業を追加</button>
+                    </div>
+                </div>
+            </div>
         `;
     }).join('');
 }
 
-/** エディタ全体の描画（行の追加・削除・並び替え時） */
+/** エディタの再描画 */
 function renderEditor(): void {
-    const tableBody = document.getElementById('wbs-editor-tbody');
-    if (tableBody) {
-        tableBody.innerHTML = renderEditorRows();
+    const container = document.getElementById('wbs-groups-container');
+    if (container) {
+        container.innerHTML = renderGroups();
     }
 
     const tableNumInput = document.getElementById('meta-table-num') as HTMLInputElement | null;
@@ -101,66 +182,42 @@ function renderEditor(): void {
     updatePreview();
 }
 
-/** 自動採番処理（例: 親は 1., 2.、子は 2.1, 2.2 など） */
-function renumberWbs(): void {
-    let topCount = 0;
-    let subCount = 0;
-    let inGroup = false;
+/** 親グループを追加 */
+function addGroup(name: string): void {
+    const trimmed = name.trim();
+    if (!trimmed) return;
 
-    wbsData.items.forEach(item => {
-        const isParent = !item.symbol && !item.duration;
-        if (isParent) {
-            topCount++;
-            subCount = 0;
-            inGroup = true;
-            item.wbs = `${topCount}.`;
-        } else if (inGroup) {
-            subCount++;
-            item.wbs = `${topCount}.${subCount}`;
-        } else {
-            topCount++;
-            item.wbs = `${topCount}.`;
-        }
+    wbsData.groups.push({
+        id: createId('grp'),
+        name: trimmed,
+        predecessors: '-',
+        duration: '1',
+        tasks: [],
     });
 
     persist();
     renderEditor();
 }
 
-/** 次の自動記号候補を計算（例: A, B, C, ...） */
-function getNextSymbol(): string {
-    const usedSymbols = new Set(wbsData.items.map(it => it.symbol.trim()).filter(Boolean));
-    for (let i = 0; i < 26; i++) {
-        const char = String.fromCharCode(65 + i);
-        if (!usedSymbols.has(char)) {
-            return char;
-        }
-    }
-    return '';
-}
+/** グループ内に子作業を追加 */
+function addTask(gIdx: number, name: string, predecessors: string, duration: string): void {
+    const trimmedName = name.trim();
+    if (!trimmedName) return;
 
-/** 行の新規追加 */
-function addItem(index?: number, isParent: boolean = false): void {
-    const newItem: WbsItem = {
-        id: createId(),
-        wbs: '',
-        name: isParent ? '新規開発' : '',
-        symbol: isParent ? '' : getNextSymbol(),
-        predecessors: isParent ? '' : '-',
-        duration: isParent ? '' : '1',
-    };
+    if (gIdx < 0 || gIdx >= wbsData.groups.length) return;
 
-    if (typeof index === 'number' && index >= 0 && index < wbsData.items.length) {
-        wbsData.items.splice(index + 1, 0, newItem);
-    } else {
-        wbsData.items.push(newItem);
-    }
+    const group = wbsData.groups[gIdx];
+    group.tasks.push({
+        id: createId('tsk'),
+        name: trimmedName,
+        predecessors: predecessors.trim() || '-',
+        duration: duration.trim() || '1',
+    });
 
     persist();
     renderEditor();
 }
 
-/** 入力ページのイベント登録と初期化 */
 export function initWbs(): void {
     wbsData = loadWbsData(SAMPLE_WBS_DATA);
 
@@ -195,93 +252,173 @@ export function initWbs(): void {
         });
     }
 
-    // テーブル内の input イベント（イベント委任で入力中のフォーカスを保持）
-    const tbody = document.getElementById('wbs-editor-tbody');
-    if (tbody) {
-        tbody.addEventListener('input', (event) => {
-            const target = event.target as HTMLInputElement;
-            if (!target || !target.matches('input[data-field]')) return;
-
-            const row = target.closest<HTMLTableRowElement>('.wbs-editor-row');
-            if (!row) return;
-
-            const index = Number(row.dataset.index);
-            const field = target.dataset.field as keyof WbsItem;
-            if (index >= 0 && index < wbsData.items.length && field) {
-                wbsData.items[index][field] = target.value;
-                persist();
-                updatePreview();
-
-                // 記号または所要時間の有無で親行スタイルの切り替え
-                const isParent = !wbsData.items[index].symbol && !wbsData.items[index].duration;
-                row.classList.toggle('is-parent-row', isParent);
-            }
-        });
-
-        // ボタン操作（クリックイベント委任）
-        tbody.addEventListener('click', (event) => {
-            const button = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-action]');
-            if (!button) return;
-
-            const row = button.closest<HTMLTableRowElement>('.wbs-editor-row');
-            if (!row) return;
-
-            const index = Number(row.dataset.index);
-            const action = button.dataset.action;
-
-            if (action === 'delete') {
-                if (wbsData.items.length <= 1) {
-                    alert('最後の1行は削除できません。');
-                    return;
-                }
-                wbsData.items.splice(index, 1);
-                persist();
-                renderEditor();
-            } else if (action === 'insert-below') {
-                addItem(index);
-            } else if (action === 'move-up' && index > 0) {
-                const temp = wbsData.items[index];
-                wbsData.items[index] = wbsData.items[index - 1];
-                wbsData.items[index - 1] = temp;
-                persist();
-                renderEditor();
-            } else if (action === 'move-down' && index < wbsData.items.length - 1) {
-                const temp = wbsData.items[index];
-                wbsData.items[index] = wbsData.items[index + 1];
-                wbsData.items[index + 1] = temp;
-                persist();
-                renderEditor();
-            }
-        });
-    }
-
-    // 「行を追加」ボタン
-    const addRowBtn = document.getElementById('add-row-btn');
-    if (addRowBtn) {
-        addRowBtn.addEventListener('click', () => {
-            addItem();
-        });
-    }
-
-    // 「親グループ行を追加」ボタン
+    // 新規親グループ追加フォーム
+    const newGroupInput = document.getElementById('new-group-input') as HTMLInputElement | null;
     const addGroupBtn = document.getElementById('add-group-btn');
-    if (addGroupBtn) {
-        addGroupBtn.addEventListener('click', () => {
-            addItem(undefined, true);
-        });
-    }
 
-    // 「WBS番号を自動整列」ボタン
-    const renumberBtn = document.getElementById('renumber-btn');
-    if (renumberBtn) {
-        renumberBtn.addEventListener('click', () => {
-            if (confirm('WBS番号を自動的に 1., 2., 2.1... のように採番し直しますか？')) {
-                renumberWbs();
+    const handleAddGroup = () => {
+        if (!newGroupInput) return;
+        const name = newGroupInput.value;
+        if (name.trim()) {
+            addGroup(name);
+            newGroupInput.value = '';
+            newGroupInput.focus();
+        }
+    };
+
+    if (addGroupBtn) {
+        addGroupBtn.addEventListener('click', handleAddGroup);
+    }
+    if (newGroupInput) {
+        newGroupInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                handleAddGroup();
             }
         });
     }
 
-    // 「サンプルデータを読み込む」ボタン
+    // グループコンテナ内イベント（イベント委任）
+    const container = document.getElementById('wbs-groups-container');
+    if (container) {
+        // 文字入力イベント（タイピングフォーカスを保持）
+        container.addEventListener('input', (event) => {
+            const target = event.target as HTMLInputElement;
+            if (!target || !target.dataset.field) return;
+
+            const field = target.dataset.field;
+            const groupBlock = target.closest<HTMLElement>('.wbs-group-block');
+            if (!groupBlock) return;
+            const gIdx = Number(groupBlock.dataset.groupIndex);
+            if (gIdx < 0 || gIdx >= wbsData.groups.length) return;
+
+            const group = wbsData.groups[gIdx];
+
+            if (field === 'group-name') {
+                group.name = target.value;
+            } else if (field === 'group-predecessors') {
+                group.predecessors = target.value;
+            } else if (field === 'group-duration') {
+                group.duration = target.value;
+            } else {
+                const taskRow = target.closest<HTMLElement>('.wbs-task-row');
+                if (!taskRow) return;
+                const tIdx = Number(taskRow.dataset.taskIndex);
+                if (tIdx < 0 || tIdx >= group.tasks.length) return;
+
+                const task = group.tasks[tIdx];
+                if (field === 'task-name') {
+                    task.name = target.value;
+                } else if (field === 'task-predecessors') {
+                    task.predecessors = target.value;
+                } else if (field === 'task-duration') {
+                    task.duration = target.value;
+                }
+            }
+
+            persist();
+            updatePreview();
+        });
+
+        // ボタンクリックイベント
+        container.addEventListener('click', (event) => {
+            const btn = (event.target as HTMLElement).closest<HTMLButtonElement>('button[data-action]');
+            if (!btn) return;
+
+            const action = btn.dataset.action;
+            const groupBlock = btn.closest<HTMLElement>('.wbs-group-block');
+            if (!groupBlock) return;
+            const gIdx = Number(groupBlock.dataset.groupIndex);
+            if (gIdx < 0 || gIdx >= wbsData.groups.length) return;
+
+            // グループ操作
+            if (action === 'delete-group') {
+                const groupName = wbsData.groups[gIdx].name || `${gIdx + 1}.`;
+                if (confirm(`親グループ「${groupName}」を削除しますか？配下の作業もすべて削除されます。`)) {
+                    wbsData.groups.splice(gIdx, 1);
+                    persist();
+                    renderEditor();
+                }
+                return;
+            }
+
+            if (action === 'move-up-group' && gIdx > 0) {
+                const temp = wbsData.groups[gIdx];
+                wbsData.groups[gIdx] = wbsData.groups[gIdx - 1];
+                wbsData.groups[gIdx - 1] = temp;
+                persist();
+                renderEditor();
+                return;
+            }
+
+            if (action === 'move-down-group' && gIdx < wbsData.groups.length - 1) {
+                const temp = wbsData.groups[gIdx];
+                wbsData.groups[gIdx] = wbsData.groups[gIdx + 1];
+                wbsData.groups[gIdx + 1] = temp;
+                persist();
+                renderEditor();
+                return;
+            }
+
+            // 作業追加
+            if (action === 'add-task') {
+                const form = btn.closest('.add-task-form');
+                if (!form) return;
+                const nameInput = form.querySelector('.add-task-name') as HTMLInputElement | null;
+                const predInput = form.querySelector('.add-task-pred') as HTMLInputElement | null;
+                const durInput = form.querySelector('.add-task-dur') as HTMLInputElement | null;
+
+                if (nameInput && nameInput.value.trim()) {
+                    addTask(
+                        gIdx,
+                        nameInput.value,
+                        predInput ? predInput.value : '',
+                        durInput ? durInput.value : ''
+                    );
+                }
+                return;
+            }
+
+            // 作業の行操作
+            const taskRow = btn.closest<HTMLElement>('.wbs-task-row');
+            if (!taskRow) return;
+            const tIdx = Number(taskRow.dataset.taskIndex);
+            const tasks = wbsData.groups[gIdx].tasks;
+            if (tIdx < 0 || tIdx >= tasks.length) return;
+
+            if (action === 'delete-task') {
+                tasks.splice(tIdx, 1);
+                persist();
+                renderEditor();
+            } else if (action === 'move-up-task' && tIdx > 0) {
+                const temp = tasks[tIdx];
+                tasks[tIdx] = tasks[tIdx - 1];
+                tasks[tIdx - 1] = temp;
+                persist();
+                renderEditor();
+            } else if (action === 'move-down-task' && tIdx < tasks.length - 1) {
+                const temp = tasks[tIdx];
+                tasks[tIdx] = tasks[tIdx + 1];
+                tasks[tIdx + 1] = temp;
+                persist();
+                renderEditor();
+            }
+        });
+
+        // 作業追加欄での Enter キー
+        container.addEventListener('keydown', (event) => {
+            const target = event.target as HTMLInputElement;
+            if (event.key === 'Enter' && target && target.dataset.enter === 'add-task') {
+                event.preventDefault();
+                const form = target.closest('.add-task-form');
+                if (!form) return;
+                const addBtn = form.querySelector('button[data-action="add-task"]') as HTMLButtonElement | null;
+                if (addBtn) addBtn.click();
+            }
+        });
+    }
+
+    // 「サンプル読込」ボタン
     const loadSampleBtn = document.getElementById('load-sample-btn');
     if (loadSampleBtn) {
         loadSampleBtn.addEventListener('click', () => {
@@ -297,7 +434,7 @@ export function initWbs(): void {
     const resetBtn = document.getElementById('reset-btn');
     if (resetBtn) {
         resetBtn.addEventListener('click', () => {
-            if (confirm('作業一覧表を初期化しますか？ すべての入力内容が消去されます。')) {
+            if (confirm('作業一覧表を初期化しますか？ すべての親グループと作業が消去されます。')) {
                 wbsData = structuredClone(DEFAULT_WBS_DATA);
                 persist();
                 renderEditor();
@@ -314,6 +451,6 @@ export function initWbs(): void {
         });
     }
 
-    // 初期描画
+    // 初回描画
     renderEditor();
 }

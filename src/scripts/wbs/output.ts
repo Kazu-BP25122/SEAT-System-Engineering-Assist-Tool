@@ -4,31 +4,22 @@ import { escapeHtml } from '../utils';
 import { downloadPng, downloadSvg } from '../diagram/export';
 import { renderTablesSvg } from '../diagram/table';
 import type { RenderedSvg } from '../diagram/svg';
-import { loadWbsData, SAMPLE_WBS_DATA } from './data';
-import type { WbsData, WbsItem } from './data';
-
-/** WBS番号の深さを判定する（例: "1." -> 0, "2.1" -> 1, "2.1.1" -> 2） */
-export function getWbsDepth(wbs: string): number {
-    const trimmed = wbs.trim().replace(/\.$/, '');
-    if (!trimmed) return 0;
-    const parts = trimmed.split('.');
-    return Math.max(0, parts.length - 1);
-}
+import { flattenWbsData, loadWbsData, SAMPLE_WBS_DATA } from './data';
+import type { WbsData } from './data';
 
 /** 作業一覧表の HTML テーブル文字列を生成する */
 export function createWbsTableHtml(data: WbsData): string {
     const timeUnit = data.timeUnit ? `〔${escapeHtml(data.timeUnit)}〕` : '';
     const captionText = [escapeHtml(data.tableNumber), escapeHtml(data.title)].filter(Boolean).join('　');
+    const flatItems = flattenWbsData(data);
 
-    if (data.items.length === 0) {
+    if (flatItems.length === 0) {
         return '<p class="empty-table-text">作業項目が登録されていません。入力画面から追加してください。</p>';
     }
 
-    const rowsHtml = data.items.map(item => {
-        const depth = getWbsDepth(item.wbs);
-        const isParent = !item.symbol && !item.duration;
-        const rowClass = isParent ? 'wbs-row wbs-parent-row' : 'wbs-row';
-        const indentClass = depth > 0 ? `wbs-name-indent depth-${Math.min(depth, 3)}` : '';
+    const rowsHtml = flatItems.map(item => {
+        const rowClass = item.isParent ? 'wbs-row wbs-parent-row' : 'wbs-row';
+        const indentClass = item.depth > 0 ? `wbs-name-indent depth-${Math.min(item.depth, 3)}` : '';
 
         return `
             <tr class="${rowClass}">
@@ -66,15 +57,16 @@ export function createWbsTableHtml(data: WbsData): string {
 export function createWbsMarkdown(data: WbsData): string {
     const timeUnit = data.timeUnit ? `〔${data.timeUnit}〕` : '';
     const title = [data.tableNumber, data.title].filter(Boolean).join(' ');
+    const flatItems = flattenWbsData(data);
     const lines: string[] = [];
+
     if (title) {
         lines.push(`### ${title}`, '');
     }
     lines.push(`| WBS 番号 | 作業の名称 | 記号 | 先行作業 | 所要時間${timeUnit} |`);
     lines.push('|:---|:---|:---:|:---:|:---:|');
-    data.items.forEach(item => {
-        const depth = getWbsDepth(item.wbs);
-        const indent = '  '.repeat(depth);
+    flatItems.forEach(item => {
+        const indent = '  '.repeat(item.depth);
         lines.push(`| ${item.wbs} | ${indent}${item.name} | ${item.symbol} | ${item.predecessors} | ${item.duration} |`);
     });
     return lines.join('\n');
@@ -83,9 +75,10 @@ export function createWbsMarkdown(data: WbsData): string {
 /** TSV（Excel等にそのまま貼れる形式）に変換する */
 export function createWbsTsv(data: WbsData): string {
     const timeUnit = data.timeUnit ? `〔${data.timeUnit}〕` : '';
+    const flatItems = flattenWbsData(data);
     const lines: string[] = [];
     lines.push(`WBS 番号\t作業の名称\t記号\t先行作業\t所要時間${timeUnit}`);
-    data.items.forEach(item => {
+    flatItems.forEach(item => {
         lines.push(`${item.wbs}\t${item.name}\t${item.symbol}\t${item.predecessors}\t${item.duration}`);
     });
     return lines.join('\n');
@@ -95,11 +88,10 @@ export function createWbsTsv(data: WbsData): string {
 export function renderWbsSvg(data: WbsData): RenderedSvg {
     const timeUnit = data.timeUnit ? `〔${data.timeUnit}〕` : '';
     const caption = [data.tableNumber, data.title].filter(Boolean).join(' ');
+    const flatItems = flattenWbsData(data);
 
-    const rows = data.items.map(item => {
-        const depth = getWbsDepth(item.wbs);
-        const indent = '　'.repeat(depth);
-        const isParent = !item.symbol && !item.duration;
+    const rows = flatItems.map(item => {
+        const indent = '　'.repeat(item.depth);
         return {
             cells: [
                 item.wbs,
@@ -108,7 +100,7 @@ export function renderWbsSvg(data: WbsData): RenderedSvg {
                 item.predecessors,
                 item.duration,
             ],
-            kind: isParent ? ('total' as const) : undefined,
+            kind: item.isParent ? ('total' as const) : undefined,
         };
     });
 

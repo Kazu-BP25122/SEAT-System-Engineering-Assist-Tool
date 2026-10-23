@@ -20,6 +20,7 @@ import '../../../styles/wbs.css';
 
         <Workspace previewLabel="表">
             <Fragment slot="editor">
+                <!-- 基本設定 -->
                 <div class="card">
                     <div class="card-title">表の基本設定</div>
                     <div class="form-row-grid">
@@ -38,35 +39,25 @@ import '../../../styles/wbs.css';
                     </div>
                 </div>
 
+                <!-- 親グループの追加 -->
                 <div class="card">
-                    <div class="editor-toolbar">
-                        <div class="editor-actions-left">
-                            <button type="button" class="btn btn-primary btn-sm" id="add-row-btn">＋ 作業行を追加</button>
-                            <button type="button" class="btn btn-secondary btn-sm" id="add-group-btn">＋ 親グループ行を追加</button>
-                        </div>
-                        <div class="editor-actions-right">
-                            <button type="button" class="btn btn-secondary btn-sm" id="renumber-btn" title="1., 2., 2.1... のように自動で番号を振り直します">WBS番号を自動整列</button>
-                        </div>
+                    <div class="card-title">親グループの追加</div>
+                    <div class="form-row">
+                        <input
+                            type="text"
+                            id="new-group-input"
+                            class="input-flex"
+                            placeholder="例: 機械開発, 電気開発, ソフトウェア開発, 試験"
+                        />
+                        <button type="button" class="btn btn-primary" id="add-group-btn">親グループを追加</button>
                     </div>
+                </div>
 
-                    <div class="wbs-editor-table-container">
-                        <table class="wbs-editor-table">
-                            <thead>
-                                <tr>
-                                    <th class="col-wbs">WBS番号</th>
-                                    <th class="col-name">作業の名称</th>
-                                    <th class="col-symbol">記号</th>
-                                    <th class="col-predecessors">先行作業</th>
-                                    <th class="col-duration">所要時間</th>
-                                    <th class="col-actions">操作</th>
-                                </tr>
-                            </thead>
-                            <tbody id="wbs-editor-tbody">
-                                <tr>
-                                    <td colspan="6" class="wbs-editor-empty">データを読み込み中...</td>
-                                </tr>
-                            </tbody>
-                        </table>
+                <!-- 階層編集エリア -->
+                <div class="card">
+                    <div class="card-title">作業一覧の編集（グループ・作業）</div>
+                    <div id="wbs-groups-container" class="wbs-groups-container">
+                        データを読み込み中...
                     </div>
                 </div>
             </Fragment>
