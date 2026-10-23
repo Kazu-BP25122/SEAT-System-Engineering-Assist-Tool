@@ -68,12 +68,20 @@ function renderBody(columns: Column[]): string {
     return `<tbody>${rows.join('')}</tbody>`;
 }
 
+/** ニーズリストのテーブルHTMLを生成する */
+export function createNeedsTableHtml(needsData: NeedsData): string {
+    const columns = toColumns(needsData);
+    if (columns.length === 0) {
+        return '<p class="empty-table-text">ステークホルダが登録されていません。入力フォームから追加してください。</p>';
+    }
+    return `<table class="needs-table">${renderHeader(needsData, columns)}${renderBody(columns)}</table>`;
+}
+
 function renderTable(needsData: NeedsData): void {
     const container = document.getElementById('table-container');
     if (!container) return;
 
-    const columns = toColumns(needsData);
-    container.innerHTML = `<table class="needs-table">${renderHeader(needsData, columns)}${renderBody(columns)}</table>`;
+    container.innerHTML = createNeedsTableHtml(needsData);
 }
 
 export function initNeedsListOutput(): void {

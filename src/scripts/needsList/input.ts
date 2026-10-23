@@ -3,15 +3,11 @@
 import { escapeHtml } from '../utils';
 import { loadNeedsData, saveNeedsData } from './data';
 import type { NeedItems, NeedsData, SubCategories } from './data';
-
-/** [ステークホルダ] または [ステークホルダ, サブカテゴリ] */
-type NeedPath = [string] | [string, string];
+import { createNeedsTableHtml } from './output';
 
 const OUTPUT_PAGE = '/tools/needsList/output';
 
-const defaultData: NeedsData = {
-    // 必要に応じて初期データを設定してください
-};
+const defaultData: NeedsData = {};
 
 let needsData: NeedsData = {};
 
@@ -25,7 +21,14 @@ function persist(): void {
     saveNeedsData(needsData);
 }
 
-/** 保存して再描画する */
+function updatePreview(): void {
+    const previewEl = document.getElementById('table-preview');
+    if (previewEl) {
+        previewEl.innerHTML = createNeedsTableHtml(needsData);
+    }
+}
+
+/** 保存して画面全体（ツリーおよびプレビュー）を再描画する */
 function commit(): void {
     persist();
     const statusEl = document.getElementById('data-status');
@@ -33,95 +36,88 @@ function commit(): void {
         statusEl.innerText = `変更をローカルに保存しました (${new Date().toLocaleTimeString()})`;
     }
     renderTree();
-}
-
-function getItems([topKey, subKey]: NeedPath): NeedItems | undefined {
-    const val = needsData[topKey];
-    if (subKey === undefined) return Array.isArray(val) ? val : undefined;
-    return Array.isArray(val) ? undefined : val?.[subKey];
+    updatePreview();
 }
 
 // ---------- 描画 ----------
 
-/** パスを data 属性の文字列に変換する */
-function pathAttrs([topKey, subKey]: NeedPath): string {
-    const top = `data-top="${escapeHtml(topKey)}"`;
-    return subKey === undefined ? top : `${top} data-sub="${escapeHtml(subKey)}"`;
+/** 名前を直接書き換えられる入力欄 */
+function nameInput(value: string, label: string, attrs: string): string {
+    return `<input type="text" class="input-flex needs-name-input" value="${escapeHtml(value)}" aria-label="${escapeHtml(label)}" ${attrs}>`;
 }
 
-function renderItemsList(items: NeedItems, path: NeedPath): string {
+function renderItemsList(items: NeedItems, topIdx: number, subIdx: number | null): string {
     if (items.length === 0) {
         return '<p class="empty-items">(ニーズ項目なし)</p>';
     }
+    const subAttr = subIdx !== null ? `data-sub-idx="${subIdx}"` : '';
     const rows = items.map((item, idx) => `
         <li>
-            <span>・ ${escapeHtml(item)}</span>
-            <button class="btn btn-danger" data-action="delete-need" ${pathAttrs(path)} data-idx="${idx}">×</button>
+            ${nameInput(item, `ニーズ ${idx + 1}`, `data-rename="item" data-top-idx="${topIdx}" ${subAttr} data-idx="${idx}"`)}
+            <button class="btn btn-danger" data-action="delete-need" data-top-idx="${topIdx}" ${subAttr} data-idx="${idx}">×</button>
         </li>
     `).join('');
     return `<ul class="items-list">${rows}</ul>`;
 }
 
-function renderAddNeedForm(path: NeedPath): string {
+function renderAddNeedForm(topIdx: number, subIdx: number | null): string {
+    const subAttr = subIdx !== null ? `data-sub-idx="${subIdx}"` : '';
     return `
         <div class="add-inline-form">
-            <input type="text" class="input-flex" placeholder="＋ ニーズを追加" data-enter="add-need" ${pathAttrs(path)}>
-            <button class="btn btn-secondary btn-inline" data-action="add-need" ${pathAttrs(path)}>追加</button>
+            <input type="text" class="input-flex" placeholder="＋ ニーズを追加" data-enter="add-need" data-top-idx="${topIdx}" ${subAttr}>
+            <button class="btn btn-secondary btn-inline" data-action="add-need" data-top-idx="${topIdx}" ${subAttr}>追加</button>
         </div>
     `;
 }
 
-function renderSubCategory(topKey: string, subKey: string, items: NeedItems): string {
-    const path: NeedPath = [topKey, subKey];
+function renderSubCategory(topIdx: number, subIdx: number, subKey: string, items: NeedItems): string {
     return `
         <div class="sub-category-block">
             <div class="sub-category-header">
-                <span>└ ${escapeHtml(subKey)}</span>
-                <button class="btn btn-danger" data-action="delete-sub" ${pathAttrs(path)}>削除</button>
+                ${nameInput(subKey, `サブカテゴリ ${subIdx + 1} の名前`, `data-rename="sub" data-top-idx="${topIdx}" data-sub-idx="${subIdx}"`)}
+                <button class="btn btn-danger" data-action="delete-sub" data-top-idx="${topIdx}" data-sub-idx="${subIdx}">削除</button>
             </div>
-            ${renderItemsList(items, path)}
-            ${renderAddNeedForm(path)}
+            ${renderItemsList(items, topIdx, subIdx)}
+            ${renderAddNeedForm(topIdx, subIdx)}
         </div>
     `;
 }
 
-function renderAddSubForm(topKey: string): string {
-    const attrs = pathAttrs([topKey]);
+function renderAddSubForm(topIdx: number): string {
     return `
         <div class="add-sub-area">
             <div class="add-inline-form">
-                <input type="text" class="input-flex" placeholder="＋ サブカテゴリを追加 (例: 若年層, VIP)" data-enter="add-sub" ${attrs}>
-                <button class="btn btn-primary btn-inline" data-action="add-sub" ${attrs}>追加</button>
+                <input type="text" class="input-flex" placeholder="＋ サブカテゴリを追加 (例: 若年層, VIP)" data-enter="add-sub" data-top-idx="${topIdx}">
+                <button class="btn btn-primary btn-inline" data-action="add-sub" data-top-idx="${topIdx}">追加</button>
             </div>
         </div>
     `;
 }
 
-function renderTopCategory(topKey: string, val: NeedItems | SubCategories): string {
+function renderTopCategory(topKey: string, val: NeedItems | SubCategories, topIdx: number): string {
     const isArray = Array.isArray(val);
-    const attrs = pathAttrs([topKey]);
 
     let body = '';
     if (isArray) {
         body = `
             <div class="top-items-area">
-                ${renderItemsList(val, [topKey])}
-                ${renderAddNeedForm([topKey])}
+                ${renderItemsList(val, topIdx, null)}
+                ${renderAddNeedForm(topIdx, null)}
             </div>
         `;
     } else if (typeof val === 'object' && val !== null) {
         body = Object.entries(val)
-            .map(([subKey, items]) => renderSubCategory(topKey, subKey, items || []))
-            .join('') + renderAddSubForm(topKey);
+            .map(([subKey, items], subIdx) => renderSubCategory(topIdx, subIdx, subKey, items || []))
+            .join('') + renderAddSubForm(topIdx);
     }
 
     return `
         <div class="top-category-block">
             <div class="top-category-header">
-                <span> ${escapeHtml(topKey)}</span>
+                ${nameInput(topKey, `ステークホルダ ${topIdx + 1} の名前`, `data-rename="top" data-top-idx="${topIdx}"`)}
                 <div>
-                    ${isArray ? `<button class="btn btn-secondary btn-convert" data-action="convert-to-group" ${attrs}>サブカテゴリを追加</button>` : ''}
-                    <button class="btn btn-danger" data-action="delete-top" ${attrs}>削除</button>
+                    ${isArray ? `<button class="btn btn-secondary btn-convert" data-action="convert-to-group" data-top-idx="${topIdx}">サブカテゴリを追加</button>` : ''}
+                    <button class="btn btn-danger" data-action="delete-top" data-top-idx="${topIdx}">削除</button>
                 </div>
             </div>
             ${body}
@@ -138,7 +134,7 @@ function renderTree(): void {
         root.innerHTML = '<p class="empty-tree">ステークホルダが登録されていません。上のフォームから追加してください。</p>';
         return;
     }
-    root.innerHTML = entries.map(([topKey, val]) => renderTopCategory(topKey, val)).join('');
+    root.innerHTML = entries.map(([topKey, val], topIdx) => renderTopCategory(topKey, val, topIdx)).join('');
 }
 
 // ---------- 操作 ----------
@@ -157,20 +153,27 @@ function addTopCategory(): void {
     commit();
 }
 
-function deleteTopCategory(topKey: string): void {
+function deleteTopCategory(topIdx: number): void {
+    const topKey = Object.keys(needsData)[topIdx];
+    if (!topKey) return;
     if (!confirm(`「${topKey}」とその下のデータをすべて削除しますか？`)) return;
     delete needsData[topKey];
     commit();
 }
 
-function convertToGroup(topKey: string): void {
+function convertToGroup(topIdx: number): void {
+    const topKey = Object.keys(needsData)[topIdx];
+    if (!topKey) return;
     needsData[topKey] = {};
     commit();
 }
 
-function addSubCategory(topKey: string, input: HTMLInputElement): void {
+function addSubCategory(topIdx: number, input: HTMLInputElement): void {
     const subName = input.value.trim();
     if (!subName) return;
+
+    const topKey = Object.keys(needsData)[topIdx];
+    if (!topKey) return;
 
     if (Array.isArray(needsData[topKey])) {
         needsData[topKey] = {};
@@ -183,30 +186,136 @@ function addSubCategory(topKey: string, input: HTMLInputElement): void {
     commit();
 }
 
-function deleteSubCategory(topKey: string, subKey: string): void {
-    if (!confirm(`サブカテゴリ「${subKey}」を削除しますか？`)) return;
+function deleteSubCategory(topIdx: number, subIdx: number): void {
+    const topKey = Object.keys(needsData)[topIdx];
+    if (!topKey) return;
     const subs = needsData[topKey] as SubCategories | undefined;
-    if (subs) {
-        delete subs[subKey];
-    }
+    if (!subs) return;
+    const subKey = Object.keys(subs)[subIdx];
+    if (!subKey || !confirm(`サブカテゴリ「${subKey}」を削除しますか？`)) return;
+    delete subs[subKey];
     commit();
 }
 
-function addNeedItem(path: NeedPath, input: HTMLInputElement): void {
+function addNeedItem(topIdx: number, subIdx: number | null, input: HTMLInputElement): void {
     const text = input.value.trim();
     if (!text) return;
 
-    getItems(path)?.push(text);
+    const topKey = Object.keys(needsData)[topIdx];
+    if (!topKey) return;
+    const val = needsData[topKey];
+
+    if (subIdx === null) {
+        if (Array.isArray(val)) val.push(text);
+    } else {
+        if (!Array.isArray(val) && val) {
+            const subKey = Object.keys(val)[subIdx];
+            if (subKey && val[subKey]) val[subKey].push(text);
+        }
+    }
+
     input.value = '';
     commit();
 
     // 再描画後、同じ入力欄にフォーカスを戻して連続入力できるようにする
-    setTimeout(() => findAddNeedInput(path)?.focus(), 50);
+    setTimeout(() => {
+        const selector = subIdx !== null
+            ? `#tree-root input[data-enter="add-need"][data-top-idx="${topIdx}"][data-sub-idx="${subIdx}"]`
+            : `#tree-root input[data-enter="add-need"][data-top-idx="${topIdx}"]:not([data-sub-idx])`;
+        document.querySelector<HTMLInputElement>(selector)?.focus();
+    }, 50);
 }
 
-function deleteNeedItem(path: NeedPath, idx: number): void {
-    getItems(path)?.splice(idx, 1);
+function deleteNeedItem(topIdx: number, subIdx: number | null, idx: number): void {
+    const topKey = Object.keys(needsData)[topIdx];
+    if (!topKey) return;
+    const val = needsData[topKey];
+
+    if (subIdx === null) {
+        if (Array.isArray(val)) val.splice(idx, 1);
+    } else {
+        if (!Array.isArray(val) && val) {
+            const subKey = Object.keys(val)[subIdx];
+            if (subKey && val[subKey]) val[subKey].splice(idx, 1);
+        }
+    }
+
     commit();
+}
+
+function renameTop(topIdx: number, newName: string): void {
+    const keys = Object.keys(needsData);
+    const oldKey = keys[topIdx];
+    if (!oldKey || oldKey === newName) return;
+    const next: NeedsData = {};
+    for (let i = 0; i < keys.length; i++) {
+        const k = keys[i];
+        next[i === topIdx ? newName : k] = needsData[k];
+    }
+    needsData = next;
+}
+
+function renameSub(topIdx: number, subIdx: number, newName: string): void {
+    const topKey = Object.keys(needsData)[topIdx];
+    if (!topKey) return;
+    const val = needsData[topKey];
+    if (Array.isArray(val) || !val) return;
+    const keys = Object.keys(val);
+    const oldSub = keys[subIdx];
+    if (!oldSub || oldSub === newName) return;
+    const nextSubs: SubCategories = {};
+    for (let i = 0; i < keys.length; i++) {
+        const k = keys[i];
+        nextSubs[i === subIdx ? newName : k] = val[k];
+    }
+    needsData[topKey] = nextSubs;
+}
+
+function renameNeed(topIdx: number, subIdx: number | null, itemIdx: number, newText: string): void {
+    const topKey = Object.keys(needsData)[topIdx];
+    if (!topKey) return;
+    const val = needsData[topKey];
+    if (subIdx === null) {
+        if (Array.isArray(val) && val[itemIdx] !== undefined) {
+            val[itemIdx] = newText;
+        }
+    } else {
+        if (!Array.isArray(val) && val) {
+            const subKey = Object.keys(val)[subIdx];
+            if (subKey && val[subKey] && val[subKey][itemIdx] !== undefined) {
+                val[subKey][itemIdx] = newText;
+            }
+        }
+    }
+}
+
+/** 名前の入力欄の値をデータに反映する。空のまま確定したときは仮の名前を付ける */
+function renameItem(el: HTMLInputElement, confirmed: boolean): void {
+    const renameType = el.dataset.rename;
+    const topIdx = Number(el.dataset.topIdx);
+    const subIdx = el.dataset.subIdx !== undefined ? Number(el.dataset.subIdx) : null;
+    const idx = el.dataset.idx !== undefined ? Number(el.dataset.idx) : null;
+    let value = el.value;
+
+    if (confirmed && !value.trim()) {
+        if (renameType === 'top') value = `ステークホルダ ${topIdx + 1}`;
+        else if (renameType === 'sub') value = `サブカテゴリ ${(subIdx ?? 0) + 1}`;
+        else if (renameType === 'item') value = `ニーズ ${(idx ?? 0) + 1}`;
+        el.value = value;
+    }
+
+    if (renameType === 'top') {
+        renameTop(topIdx, value);
+    } else if (renameType === 'sub') {
+        if (subIdx !== null) renameSub(topIdx, subIdx, value);
+    } else if (renameType === 'item') {
+        if (idx !== null) renameNeed(topIdx, subIdx, idx, value);
+    } else {
+        return;
+    }
+
+    persist();
+    updatePreview();
 }
 
 function resetToDefault(): void {
@@ -222,57 +331,59 @@ function saveAndNavigate(): void {
 
 // ---------- イベント ----------
 
-function readPath(el: HTMLElement): NeedPath {
-    const { top = '', sub } = el.dataset;
-    return sub === undefined ? [top] : [top, sub];
-}
-
-function findAddNeedInput(path: NeedPath): HTMLInputElement | undefined {
-    const inputs = document.querySelectorAll<HTMLInputElement>('#tree-root input[data-enter="add-need"]');
-    return Array.from(inputs).find(el => {
-        const p = readPath(el);
-        return p[0] === path[0] && p[1] === path[1];
-    });
-}
-
 /** ボタンと同じフォーム内の入力欄を取得する */
 function siblingInput(el: HTMLElement): HTMLInputElement | null {
     return el.closest('.add-inline-form')?.querySelector('input') ?? null;
 }
 
 function handleTreeAction(action: string, el: HTMLElement): void {
-    const path = readPath(el);
-    const [topKey, subKey] = path;
+    const topIdx = Number(el.dataset.topIdx);
+    const subIdx = el.dataset.subIdx !== undefined ? Number(el.dataset.subIdx) : null;
 
     switch (action) {
         case 'delete-top':
-            deleteTopCategory(topKey);
+            deleteTopCategory(topIdx);
             break;
         case 'convert-to-group':
-            convertToGroup(topKey);
+            convertToGroup(topIdx);
             break;
         case 'delete-sub':
-            deleteSubCategory(topKey, subKey ?? '');
+            if (subIdx !== null) deleteSubCategory(topIdx, subIdx);
             break;
         case 'delete-need':
-            deleteNeedItem(path, Number(el.dataset.idx));
+            deleteNeedItem(topIdx, subIdx, Number(el.dataset.idx));
             break;
         case 'add-sub': {
             const input = el instanceof HTMLInputElement ? el : siblingInput(el);
-            if (input) addSubCategory(topKey, input);
+            if (input) addSubCategory(topIdx, input);
             break;
         }
         case 'add-need': {
             const input = el instanceof HTMLInputElement ? el : siblingInput(el);
-            if (input) addNeedItem(path, input);
+            if (input) addNeedItem(topIdx, subIdx, input);
             break;
         }
     }
 }
 
+/** 名前の入力欄（ステークホルダ・サブカテゴリ・ニーズ）の変更を受け取る */
+function bindRenameEvents(root: HTMLElement | null): void {
+    root?.addEventListener('input', e => {
+        const el = e.target as HTMLInputElement;
+        if (el.dataset.rename) renameItem(el, false);
+    });
+    root?.addEventListener('change', e => {
+        const el = e.target as HTMLInputElement;
+        if (el.dataset.rename) renameItem(el, true);
+    });
+}
+
 function bindEvents(): void {
     document.getElementById('reset-btn')?.addEventListener('click', resetToDefault);
     document.getElementById('add-top-category-btn')?.addEventListener('click', addTopCategory);
+    document.getElementById('new-top-category-input')?.addEventListener('keydown', e => {
+        if (e.key === 'Enter' && !e.isComposing) addTopCategory();
+    });
     document.getElementById('save-navigate-btn')?.addEventListener('click', saveAndNavigate);
 
     const root = document.getElementById('tree-root');
@@ -282,12 +393,15 @@ function bindEvents(): void {
     });
     root?.addEventListener('keydown', e => {
         const el = e.target as HTMLElement;
-        if (e.key === 'Enter' && el.dataset.enter) handleTreeAction(el.dataset.enter, el);
+        if (e.key === 'Enter' && !e.isComposing && el.dataset.enter) handleTreeAction(el.dataset.enter, el);
     });
+
+    bindRenameEvents(root);
 }
 
 export function initNeedsList(): void {
     needsData = loadNeedsData(defaultData);
     bindEvents();
     renderTree();
+    updatePreview();
 }

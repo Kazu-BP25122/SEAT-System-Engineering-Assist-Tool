@@ -13,12 +13,9 @@ function createListHtml(items: string[] | undefined): string {
     return `<ul class="matrix-list">${listItems}</ul>`;
 }
 
-/** 1. SWOT分析表（2×2マトリックス）の作成 */
-function renderSwotTable(data: SwotData): void {
-    const container = document.getElementById('swot-table-container');
-    if (!container) return;
-
-    container.innerHTML = `
+/** 1. SWOT分析表（2×2マトリックス）のHTMLを作成 */
+export function createSwotTableHtml(data: SwotData): string {
+    return `
         <table class="swot-matrix">
             <tbody>
                 <tr>
@@ -46,12 +43,9 @@ function renderSwotTable(data: SwotData): void {
     `;
 }
 
-/** 2. クロスSWOT分析表（2×2マトリックス）の作成 */
-function renderCrossSwotTable(data: SwotData): void {
-    const container = document.getElementById('cross-swot-table-container');
-    if (!container) return;
-
-    container.innerHTML = `
+/** 2. クロスSWOT分析表（2×2マトリックス）のHTMLを作成 */
+export function createCrossSwotTableHtml(data: SwotData): string {
+    return `
         <table class="swot-matrix">
             <tbody>
                 <tr>
@@ -77,6 +71,18 @@ function renderCrossSwotTable(data: SwotData): void {
             </tbody>
         </table>
     `;
+}
+
+function renderSwotTable(data: SwotData): void {
+    const container = document.getElementById('swot-table-container');
+    if (!container) return;
+    container.innerHTML = createSwotTableHtml(data);
+}
+
+function renderCrossSwotTable(data: SwotData): void {
+    const container = document.getElementById('cross-swot-table-container');
+    if (!container) return;
+    container.innerHTML = createCrossSwotTableHtml(data);
 }
 
 /** 出力ページの初期化 */

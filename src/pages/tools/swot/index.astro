@@ -1,11 +1,12 @@
 ---
 import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Workspace from '../../../components/Workspace.astro';
 import '../../../styles/style.css';
 import '../../../styles/swot.css';
 ---
 
 <BaseLayout title="SWOT分析">
-    <div class="container">
+    <div class="container container-wide">
         <header>
             <div>
                 <h1>SWOT / クロスSWOTデータ編集</h1>
@@ -16,10 +17,26 @@ import '../../../styles/swot.css';
             </div>
         </header>
 
-        <!-- メイン入力グリッド -->
-        <div id="swot-cards-container" class="swot-grid">
-            <p class="status-text">データを読み込み中...</p>
-        </div>
+        <Workspace previewLabel="マトリックス">
+            <Fragment slot="editor">
+                <!-- メイン入力グリッド -->
+                <div id="swot-cards-container" class="swot-grid">
+                    <p class="status-text">データを読み込み中...</p>
+                </div>
+            </Fragment>
+
+            <Fragment slot="preview">
+                <div class="card">
+                    <div class="card-title">SWOT 分析（プレビュー）</div>
+                    <div id="swot-preview-container" class="swot-preview-wrapper">データを読み込み中...</div>
+                </div>
+
+                <div class="card">
+                    <div class="card-title">クロス SWOT 分析（プレビュー）</div>
+                    <div id="cross-swot-preview-container" class="swot-preview-wrapper">データを読み込み中...</div>
+                </div>
+            </Fragment>
+        </Workspace>
 
         <div class="footer-bar">
             <div>
