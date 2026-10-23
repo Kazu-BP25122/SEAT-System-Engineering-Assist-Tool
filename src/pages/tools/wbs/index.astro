@@ -1,0 +1,95 @@
+---
+import BaseLayout from '../../../layouts/BaseLayout.astro';
+import Workspace from '../../../components/Workspace.astro';
+import '../../../styles/style.css';
+import '../../../styles/wbs.css';
+---
+
+<BaseLayout title="作業一覧表">
+    <div class="container container-wide">
+        <header>
+            <div>
+                <h1>作業一覧表（WBS）作成</h1>
+                <div class="subtitle">プロジェクトの作業一覧・先行関係・所要時間を整理して表を作成します</div>
+            </div>
+            <div class="header-actions">
+                <button type="button" class="btn btn-secondary" id="load-sample-btn">サンプル読込</button>
+                <button type="button" class="btn btn-secondary" id="reset-btn">初期化</button>
+            </div>
+        </header>
+
+        <Workspace previewLabel="表">
+            <Fragment slot="editor">
+                <div class="card">
+                    <div class="card-title">表の基本設定</div>
+                    <div class="form-row-grid">
+                        <div class="form-group">
+                            <label for="meta-table-num">表番号・見出し</label>
+                            <input type="text" id="meta-table-num" class="form-control" placeholder="例: 表 7.1">
+                        </div>
+                        <div class="form-group">
+                            <label for="meta-title">表のタイトル</label>
+                            <input type="text" id="meta-title" class="form-control" placeholder="例: プロジェクトの作業一覧表">
+                        </div>
+                        <div class="form-group">
+                            <label for="meta-unit">所要時間の単位</label>
+                            <input type="text" id="meta-unit" class="form-control" placeholder="例: 週, 日, 時間">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="editor-toolbar">
+                        <div class="editor-actions-left">
+                            <button type="button" class="btn btn-primary btn-sm" id="add-row-btn">＋ 作業行を追加</button>
+                            <button type="button" class="btn btn-secondary btn-sm" id="add-group-btn">＋ 親グループ行を追加</button>
+                        </div>
+                        <div class="editor-actions-right">
+                            <button type="button" class="btn btn-secondary btn-sm" id="renumber-btn" title="1., 2., 2.1... のように自動で番号を振り直します">WBS番号を自動整列</button>
+                        </div>
+                    </div>
+
+                    <div class="wbs-editor-table-container">
+                        <table class="wbs-editor-table">
+                            <thead>
+                                <tr>
+                                    <th class="col-wbs">WBS番号</th>
+                                    <th class="col-name">作業の名称</th>
+                                    <th class="col-symbol">記号</th>
+                                    <th class="col-predecessors">先行作業</th>
+                                    <th class="col-duration">所要時間</th>
+                                    <th class="col-actions">操作</th>
+                                </tr>
+                            </thead>
+                            <tbody id="wbs-editor-tbody">
+                                <tr>
+                                    <td colspan="6" class="wbs-editor-empty">データを読み込み中...</td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </Fragment>
+
+            <Fragment slot="preview">
+                <div class="card">
+                    <div class="card-title">作業一覧表（プレビュー）</div>
+                    <div id="table-preview">データを読み込み中...</div>
+                </div>
+            </Fragment>
+        </Workspace>
+
+        <div class="footer-bar">
+            <div>
+                <span id="data-status" class="status-text">変更内容は自動保存されています</span>
+            </div>
+            <button type="button" class="btn btn-success" id="save-navigate-btn">確定して表（出力画面）を出力 →</button>
+        </div>
+    </div>
+</BaseLayout>
+
+<script>
+    import { initWbs } from '../../../scripts/wbs/input';
+
+    initWbs();
+</script>

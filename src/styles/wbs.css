@@ -1,0 +1,337 @@
+/* 作業一覧表（WBS）専用のスタイル */
+
+/* ---------- 共通ユーティリティ ---------- */
+
+.form-row-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.form-group label {
+    display: block;
+    font-size: 0.82rem;
+    font-weight: bold;
+    color: #4a5568;
+    margin-bottom: 4px;
+}
+
+.form-control {
+    width: 100%;
+    padding: 6px 10px;
+    font-size: 0.9rem;
+    border: 1px solid #cbd5e0;
+    border-radius: 4px;
+    background-color: #fff;
+    color: #2d3748;
+    box-sizing: border-box;
+    transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+}
+
+.form-control:focus {
+    border-color: #3182ce;
+    outline: none;
+    box-shadow: 0 0 0 2px rgba(49, 130, 206, 0.2);
+}
+
+.input-sm {
+    padding: 4px 8px;
+    font-size: 0.85rem;
+}
+
+.text-center {
+    text-align: center;
+}
+
+/* ---------- 入力ページ（エディタ） ---------- */
+
+.editor-toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.editor-actions-left,
+.editor-actions-right {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+}
+
+.wbs-editor-table-container {
+    overflow-x: auto;
+    border: 1px solid #e2e8f0;
+    border-radius: 6px;
+    background: #fff;
+}
+
+.wbs-editor-table {
+    width: 100%;
+    min-width: 620px;
+    border-collapse: collapse;
+}
+
+.wbs-editor-table th {
+    background-color: #edf2f7;
+    color: #4a5568;
+    font-weight: 600;
+    font-size: 0.85rem;
+    padding: 8px 10px;
+    border-bottom: 2px solid #cbd5e0;
+    border-right: 1px solid #e2e8f0;
+    text-align: center;
+}
+
+.wbs-editor-table th:last-child {
+    border-right: none;
+}
+
+.wbs-editor-table td {
+    padding: 6px 6px;
+    border-bottom: 1px solid #e2e8f0;
+    border-right: 1px solid #edf2f7;
+    vertical-align: middle;
+}
+
+.wbs-editor-table td:last-child {
+    border-right: none;
+}
+
+/* カラム幅指定 */
+.col-wbs {
+    width: 85px;
+}
+
+.col-name {
+    min-width: 160px;
+}
+
+.col-symbol {
+    width: 65px;
+}
+
+.col-predecessors {
+    width: 90px;
+}
+
+.col-duration {
+    width: 80px;
+}
+
+.col-actions {
+    width: 110px;
+    text-align: center;
+}
+
+/* 行のハイライト */
+.wbs-editor-row:hover {
+    background-color: #f8fafc;
+}
+
+.wbs-editor-row.is-parent-row {
+    background-color: #f7fafc;
+}
+
+.wbs-editor-row.is-parent-row input[data-field="name"] {
+    font-weight: 600;
+}
+
+/* 行操作ボタングループ */
+.row-btn-group {
+    display: inline-flex;
+    gap: 3px;
+    align-items: center;
+}
+
+.btn-icon {
+    padding: 3px 6px;
+    font-size: 0.78rem;
+    line-height: 1;
+    border: 1px solid #cbd5e0;
+    background-color: #edf2f7;
+    color: #4a5568;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.15s;
+}
+
+.btn-icon:hover:not(:disabled) {
+    background-color: #e2e8f0;
+    color: #2d3748;
+}
+
+.btn-icon:disabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+}
+
+.btn-icon.btn-insert {
+    background-color: #ebf8ff;
+    color: #2b6cb0;
+    border-color: #bee3f8;
+}
+
+.btn-icon.btn-insert:hover {
+    background-color: #bee3f8;
+}
+
+.btn-icon.btn-delete {
+    background-color: #fff5f5;
+    color: #c53030;
+    border-color: #fed7d7;
+}
+
+.btn-icon.btn-delete:hover {
+    background-color: #fed7d7;
+}
+
+.wbs-editor-empty {
+    text-align: center;
+    padding: 30px;
+    color: #a0aec0;
+    font-size: 0.9rem;
+}
+
+/* ---------- 作業一覧表の描画（プレビュー・出力共通） ---------- */
+
+.wbs-table-wrapper {
+    margin: 10px auto;
+    max-width: 100%;
+    overflow-x: auto;
+}
+
+.wbs-table-caption {
+    font-size: 1.05rem;
+    font-weight: bold;
+    color: #2d3748;
+    text-align: center;
+    margin-bottom: 12px;
+    letter-spacing: 0.05em;
+}
+
+.wbs-table {
+    width: 100%;
+    max-width: 780px;
+    margin: 0 auto;
+    border-collapse: collapse;
+    background-color: #ffffff;
+    font-size: 0.92rem;
+    border: 2px solid #2d3748;
+}
+
+.wbs-table th,
+.wbs-table td {
+    border: 1px solid #4a5568;
+    padding: 7px 12px;
+}
+
+.wbs-table th {
+    background-color: #edf2f7;
+    font-weight: bold;
+    color: #1a202c;
+    text-align: center;
+    border-bottom: 2px solid #2d3748;
+}
+
+.wbs-th-number {
+    width: 16%;
+}
+
+.wbs-th-name {
+    width: 38%;
+}
+
+.wbs-th-symbol {
+    width: 12%;
+}
+
+.wbs-th-predecessors {
+    width: 16%;
+}
+
+.wbs-th-duration {
+    width: 18%;
+}
+
+.wbs-cell-number {
+    text-align: left;
+    padding-left: 14px;
+    font-feature-settings: "tnum";
+}
+
+.wbs-cell-name {
+    text-align: left;
+}
+
+.wbs-name-indent.depth-1 {
+    padding-left: 28px;
+}
+
+.wbs-name-indent.depth-2 {
+    padding-left: 44px;
+}
+
+.wbs-name-indent.depth-3 {
+    padding-left: 60px;
+}
+
+.wbs-parent-row td {
+    font-weight: bold;
+}
+
+.wbs-cell-symbol {
+    text-align: center;
+    font-weight: 500;
+}
+
+.wbs-cell-predecessors {
+    text-align: center;
+}
+
+.wbs-cell-duration {
+    text-align: center;
+    font-feature-settings: "tnum";
+}
+
+.empty-table-text {
+    color: #a0aec0;
+    text-align: center;
+    padding: 30px;
+    font-size: 0.95rem;
+}
+
+/* ---------- 出力ページのツールバー・アクション ---------- */
+
+.output-toolbar {
+    display: flex;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 15px;
+}
+
+@media print {
+    body {
+        background: #fff;
+        padding: 0;
+    }
+    header,
+    .output-toolbar,
+    .btn,
+    .footer-bar {
+        display: none !important;
+    }
+    .card {
+        box-shadow: none;
+        border: none;
+        padding: 0;
+    }
+    .wbs-table {
+        width: 100%;
+        max-width: 100%;
+    }
+}
